@@ -8,7 +8,7 @@
 #include <QPushButton>
 #include <QTextEdit>
 #include <QLabel>
-#include <QProcess>
+#include <QProcess> // Include QProcess
 #include <QTimer>
 #include <QColor>
 #include <QTextCharFormat>
@@ -27,7 +27,7 @@
 #include <QFile>
 #include <QTextStream>
 
-#include <yaml-cpp/yaml.h> // Include YAML library header
+#include <yaml-cpp/yaml.h>
 
 // --- Configuration Data Structures ---
 struct DeviceConfig {
@@ -50,7 +50,6 @@ struct DeviceConfig {
     // Other notes from YAML
     QString notes;
 
-    // Default constructor to ensure members are initialized
     DeviceConfig() = default;
 };
 
@@ -58,7 +57,7 @@ struct FullConfig {
     QMap<QString, DeviceConfig> devices;
     DeviceConfig default_config;
 
-    FullConfig() = default; // Default constructor
+    FullConfig() = default;
 };
 
 
@@ -83,12 +82,14 @@ private slots:
     void on_sideloadButton_clicked();
     void on_adbPushButton_clicked();
     void on_adbPullButton_clicked();
+    void on_cancelButton_clicked(); // <-- New Slot for Cancel Button
 
     // --- Main QProcess Slots ---
     void processReadyReadStandardOutput();
     void processReadyReadStandardError();
     void processFinished(int exitCode, QProcess::ExitStatus exitStatus);
     void processErrorOccurred(QProcess::ProcessError error);
+    void on_mainProcess_started(); // <-- New Slot for Process Start
 
     // --- State Check QProcess Slots ---
     void stateCheckProcessReadyReadStandardOutput();
@@ -126,10 +127,11 @@ private:
     QPushButton *magiskButton;
     QPushButton *rebootSystemButton;
     QPushButton *rebootRecoveryButton;
-    QPushButton *rebootBootloaderButton; // Ensure only ONE declaration
+    QPushButton *rebootBootloaderButton;
     QPushButton *sideloadButton;
     QPushButton *adbPushButton;
     QPushButton *adbPullButton;
+    QPushButton *cancelButton; // <-- New Cancel Button Member
 
 
     // --- Processes ---
@@ -140,7 +142,7 @@ private:
     QTimer *stateTimer;
 
     // --- State Variables ---
-    QString deviceMode; // 'none', 'adb', 'fastboot', 'recovery', 'sideload', 'tools_missing', 'check_failed'
+    QString deviceMode;
     QString deviceSerialAdb;
     QString deviceSerialFastboot;
     QString deviceManufacturer;
@@ -149,19 +151,19 @@ private:
     QString currentRunningCommand; // Identifier for mainProcess
 
     // --- State Check Temp Variables ---
-    QString adbDetectedMode; // Temp result from adb devices parse
-    QString adbDetectedSerial; // Temp result from adb devices parse
-    bool adbCheckCompleted; // Flag to know if adb devices check finished
+    QString adbDetectedMode;
+    QString adbDetectedSerial;
+    bool adbCheckCompleted;
 
     // --- Configuration ---
-    FullConfig loadedConfig; // Member variable to hold loaded config
+    FullConfig loadedConfig;
 
     // --- Helper Functions ---
     void appendOutput(const QString &text, const QColor &color = Qt::black);
     void updateDeviceMode(const QString& mode);
     void updateDeviceSerial(const QString& serial, bool isFastboot);
     void updateDeviceDetailsLabels();
-    void updateButtonStates();
+    void updateButtonStates(); // Modified to handle cancel button
     void updateStatusBar(const QString& message, int timeout = 0);
 
     // --- State Check Logic Helpers ---
@@ -178,8 +180,7 @@ private:
 
     // --- YAML Configuration Logic ---
     void loadConfig(const QString& filePath);
-    // Helper to get device-specific or default config based on detected device
-    DeviceConfig getDeviceConfig() const; // <-- FIX: Return by value
+    DeviceConfig getDeviceConfig() const;
 };
 
 #endif // ANDROIDTOOLWINDOW_H

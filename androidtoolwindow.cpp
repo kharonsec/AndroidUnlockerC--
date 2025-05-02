@@ -1,5 +1,5 @@
 // Define file path at the top
-#define YAML_FILE_PATH "devices.yaml" // <-- FIX 1: Define YAML file path here
+#define YAML_FILE_PATH "devices.yaml"
 
 #include "androidtoolwindow.h"
 
@@ -33,9 +33,10 @@ QString readYamlString(const YAML::Node& node, const QString& key, const QString
     return defaultValue;
 }
 
+
 // --- Helper to load DeviceConfig from YAML Node ---
 DeviceConfig loadDeviceConfigFromYaml(const YAML::Node& node) {
-    DeviceConfig config; // Struct default constructor initializes members
+    DeviceConfig config;
 
     if (!node.IsMap()) return config;
 
@@ -79,6 +80,7 @@ AndroidToolWindow::AndroidToolWindow(QWidget *parent)
       sideloadButton(new QPushButton("ADB Sideload ZIP")),
       adbPushButton(new QPushButton("ADB Push File")),
       adbPullButton(new QPushButton("ADB Pull File")),
+      cancelButton(new QPushButton("Cancel Operation")),
       mainProcess(new QProcess(this)),
       stateCheckProcess(new QProcess(this)),
       stateTimer(new QTimer(this)),
@@ -91,7 +93,6 @@ AndroidToolWindow::AndroidToolWindow(QWidget *parent)
       adbDetectedMode("none"),
       adbDetectedSerial("N/A"),
       adbCheckCompleted(false)
-      // loadedConfig member is default-constructed
 {
     setCentralWidget(centralWidget);
     setStatusBar(new QStatusBar(this));
@@ -135,6 +136,7 @@ AndroidToolWindow::AndroidToolWindow(QWidget *parent)
     buttonLayoutFile->addWidget(sideloadButton);
     buttonLayoutFile->addWidget(adbPushButton);
     buttonLayoutFile->addWidget(adbPullButton);
+    buttonLayoutFile->addWidget(cancelButton);
 
 
     // Main layout (on the central widget)
@@ -155,12 +157,12 @@ AndroidToolWindow::AndroidToolWindow(QWidget *parent)
     connect(recoveryButton, &QPushButton::clicked, this, &AndroidToolWindow::on_recoveryButton_clicked);
     connect(magiskButton, &QPushButton::clicked, this, &AndroidToolWindow::on_magiskButton_clicked);
     connect(rebootSystemButton, &QPushButton::clicked, this, &AndroidToolWindow::on_rebootSystemButton_clicked);
-    // FIX: Corrected class name in connect call
     connect(rebootRecoveryButton, &QPushButton::clicked, this, &AndroidToolWindow::on_rebootRecoveryButton_clicked);
     connect(rebootBootloaderButton, &QPushButton::clicked, this, &AndroidToolWindow::on_rebootBootloaderButton_clicked);
     connect(sideloadButton, &QPushButton::clicked, this, &AndroidToolWindow::on_sideloadButton_clicked);
     connect(adbPushButton, &QPushButton::clicked, this, &AndroidToolWindow::on_adbPushButton_clicked);
     connect(adbPullButton, &QPushButton::clicked, this, &AndroidToolWindow::on_adbPullButton_clicked);
+    connect(cancelButton, &QPushButton::clicked, this, &AndroidToolWindow::on_cancelButton_clicked);
 
     // Main QProcess connections
     connect(mainProcess, &QProcess::readyReadStandardOutput, this, &AndroidToolWindow::processReadyReadStandardOutput);
@@ -168,11 +170,9 @@ AndroidToolWindow::AndroidToolWindow(QWidget *parent)
     connect(mainProcess, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
             this, &AndroidToolWindow::processFinished);
     connect(mainProcess, &QProcess::errorOccurred, this, &AndroidToolWindow::processErrorOccurred);
+    connect(mainProcess, &QProcess::started, this, &AndroidToolWindow::on_mainProcess_started);
 
     // State Check QProcess connections
-    // We don't need to read output directly here, parsing happens after finished
-    // connect(stateCheckProcess, &QProcess::readyReadStandardOutput, this, &AndroidToolWindow::stateCheckProcessReadyReadStandardOutput);
-    // connect(stateCheckProcess, &QProcess::readyReadStandardError, this, &AndroidToolWindow::stateCheckProcessReadyReadStandardError);
     connect(stateCheckProcess, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
             this, &AndroidToolWindow::stateCheckProcessFinished);
     connect(stateCheckProcess, &QProcess::errorOccurred, this, &AndroidToolWindow::stateCheckProcessErrorOccurred);
@@ -181,19 +181,19 @@ AndroidToolWindow::AndroidToolWindow(QWidget *parent)
     connect(stateTimer, &QTimer::timeout, this, &AndroidToolWindow::checkDeviceState);
 
     // --- Initial State ---
-    stateTimer->start(3000); // Check every 3 seconds
-    checkDeviceState(); // Perform an initial state check immediately
+    stateTimer->start(3000);
+    checkDeviceState();
 
-    // Initial button states are set by checkDeviceState -> updateButtonStates
+    cancelButton->hide();
+    updateButtonStates();
+
     updateStatusBar("Ready. Ensure ADB/Fastboot drivers are installed.", 0);
 }
 
 AndroidToolWindow::~AndroidToolWindow()
 {
-    // Child objects with 'this' as parent are automatically deleted by Qt's object tree.
-    // Consider killing processes on application exit if necessary.
-    // if (mainProcess->state() != QProcess::NotRunning) mainProcess->kill();
-    // if (stateCheckProcess->state() != QProcess::NotRunning) stateCheckProcess->kill();
+    if (mainProcess->state() != QProcess::NotRunning) mainProcess->kill();
+    if (stateCheckProcess->state() != QProcess::NotRunning) stateCheckProcess->kill();
 }
 
 // --- Helper Functions Implementation ---
@@ -218,16 +218,12 @@ void AndroidToolWindow::updateDeviceMode(const QString& mode)
         modeLabel->setText("Mode: " + capitalizedMode);
         appendOutput(QString("[*] Device mode updated to: %1").arg(capitalizedMode), Qt::gray);
         updateButtonStates();
-        // When mode changes, reset manufacturer/model/serial until re-detected in the new mode
         if (deviceMode == "none" || deviceMode == "tools_missing" || deviceMode == "check_failed") {
-            deviceManufacturer = "Unknown"; // Reset Mfr/Model
+            deviceManufacturer = "Unknown";
             deviceModel = "Unknown";
-            updateDeviceDetailsLabels(); // Update Mfr/Model labels
-            serialLabel->setText("Serial: N/A"); // Clear serial label
+            updateDeviceDetailsLabels();
+            serialLabel->setText("Serial: N/A");
         }
-         // Manufacturer/Model are kept across ADB modes (adb, recovery, sideload)
-         // and reset when going to/from fastboot or none/error states.
-         // Serial is updated specifically by updateDeviceSerial.
     }
 }
 
@@ -236,14 +232,12 @@ void AndroidToolWindow::updateDeviceSerial(const QString& serial, bool isFastboo
     QString* currentSerial = isFastboot ? &deviceSerialFastboot : &deviceSerialAdb;
     if (*currentSerial != serial) {
         *currentSerial = serial;
-         // Update the displayed serial if the currently displayed mode matches this serial type
         if ((isFastboot && deviceMode == "fastboot") || (!isFastboot && (deviceMode == "adb" || deviceMode == "recovery" || deviceMode == "sideload"))) {
              serialLabel->setText("Serial: " + serial);
-             if (serial != "N/A") { // Only log if a serial was actually found
+             if (serial != "N/A") {
                  appendOutput(QString("[*] Device serial (%1) updated to: %2").arg(isFastboot ? "Fastboot" : "ADB").arg(serial), Qt::gray);
              }
         } else if (deviceMode == "none") {
-            // Clear serial if mode goes to none
             serialLabel->setText("Serial: N/A");
         }
     }
@@ -251,12 +245,9 @@ void AndroidToolWindow::updateDeviceSerial(const QString& serial, bool isFastboo
 
 void AndroidToolWindow::updateDeviceDetailsLabels()
 {
-    // Update Manufacturer and Model labels based on current member variables
     manufacturerLabel->setText("Manufacturer: " + deviceManufacturer);
     modelLabel->setText("Model: " + deviceModel);
-    // Serial is handled by updateDeviceSerial
 }
-
 
 void AndroidToolWindow::updateButtonStates()
 {
@@ -268,26 +259,20 @@ void AndroidToolWindow::updateButtonStates()
     bool is_fastboot = deviceMode == "fastboot";
     bool is_sideload = deviceMode == "sideload";
     bool is_recovery = deviceMode == "recovery";
-    // bool is_connected = deviceMode != "none"; // Unused
 
-    // Main Control Buttons (mostly Fastboot)
+    detectButton->setEnabled(!disableActions);
     unlockButton->setEnabled(is_fastboot && !disableActions);
     lockButton->setEnabled(is_fastboot && !disableActions);
     recoveryButton->setEnabled(is_fastboot && !disableActions);
     magiskButton->setEnabled(is_fastboot && !disableActions);
-
-    // Reboot Buttons
     rebootSystemButton->setEnabled((is_adb || is_fastboot || is_recovery || is_sideload) && !disableActions);
     rebootRecoveryButton->setEnabled((is_adb || is_recovery || is_sideload) && !disableActions);
     rebootBootloaderButton->setEnabled((is_adb || is_recovery || is_sideload) && !disableActions);
-
-    // Sideload / File Operations
     sideloadButton->setEnabled(is_sideload && !disableActions);
     adbPushButton->setEnabled((is_adb || is_recovery || is_sideload) && !disableActions);
     adbPullButton->setEnabled((is_adb || is_recovery || is_sideload) && !disableActions);
 
-    // Detect button
-    detectButton->setEnabled(!disableActions);
+    cancelButton->setVisible(mainProcessRunning);
 }
 
 void AndroidToolWindow::updateStatusBar(const QString& message, int timeout)
@@ -323,19 +308,52 @@ void AndroidToolWindow::processFinished(int exitCode, QProcess::ExitStatus exitS
     QString commandId = currentRunningCommand;
     currentRunningCommand.clear();
 
-    QString statusText = (exitStatus == QProcess::NormalExit) ? "Normal Exit" : "Crash";
-    appendOutput(QString("[*] Command finished: %1 (Exit Code: %2, Status: %3)").arg(commandId, QString::number(exitCode), statusText), Qt::blue);
+    // Hide cancel button and re-enable buttons immediately upon finishing
+    cancelButton->hide();
+    updateButtonStates();
+
+    QString statusText;
+    QColor statusColor;
+
+    if (exitStatus == QProcess::NormalExit) {
+        statusText = "Normal Exit";
+        statusColor = Qt::blue;
+    }
+    // FIX WORKAROUND: Using integer literal '1' instead of QProcess::ExitStatus::Crash
+    // This bypasses a likely compiler/Qt header resolution issue on your system.
+    // The value for Crash is typically 1.
+    else if (static_cast<int>(exitStatus) == 1) { // Check if exitStatus is the integer value 1
+        statusText = "Crashed";
+        statusColor = Qt::darkRed;
+    } else {
+        // Handle any other unexpected exit status values
+        statusText = "Abnormal Exit";
+        statusColor = Qt::darkYellow;
+    }
+
+    // Check for the "Killed" state (exitCode -1 and status Crash)
+    // FIX WORKAROUND: Using integer literal '1' for Crash status check
+     if (exitCode == -1 && static_cast<int>(exitStatus) == 1) { // Check if exitCode is -1 AND exitStatus is 1
+         statusText = "Killed";
+         statusColor = Qt::darkYellow;
+         appendOutput(QString("[*] Command cancelled: %1").arg(commandId), Qt::darkYellow);
+         updateStatusBar("Operation cancelled.", 3000);
+         QTimer::singleShot(500, this, &AndroidToolWindow::checkDeviceState);
+         return; // Skip normal exit/error handling below for killed processes
+     }
+
+
+    appendOutput(QString("[*] Command finished: %1 (Exit Code: %2, Status: %3)").arg(commandId, QString::number(exitCode), statusText), statusColor);
+
 
     bool commandSuccess = (exitStatus == QProcess::NormalExit && exitCode == 0);
 
     if (!commandSuccess) {
          appendOutput("[ERROR] Command failed. Check output above.", Qt::darkRed);
          updateStatusBar("Command '" + commandId + "' failed.", 5000);
-         // TODO: Add more specific error parsing here based on 'commandId' and stderr
     } else {
          appendOutput("[SUCCESS] Command completed successfully.", Qt::darkGreen);
          updateStatusBar("Command '" + commandId + "' successful.", 5000);
-          // TODO: Add more specific success messages based on 'commandId'
           if (commandId == "unlock" || commandId == "lock") {
               appendOutput("[*] Check device screen for confirmation!", Qt::darkYellow);
           }
@@ -354,20 +372,20 @@ void AndroidToolWindow::processFinished(int exitCode, QProcess::ExitStatus exitS
     }
 
     // --- Post-Command Logic ---
-    if (commandId == "detect_adb_props") {
+    if (commandId != "detect_adb_props" && commandId != "detect_fastboot_vars") {
+         QTimer::singleShot(500, this, &AndroidToolWindow::checkDeviceState);
+    } else if (commandId == "detect_adb_props") {
         if (commandSuccess) {
             parseAdbPropertiesOutput(mainProcess->readAllStandardOutput());
         } else {
             appendOutput("[WARNING] Failed to get ADB properties.", Qt::darkYellow);
-             if (deviceManufacturer == "Unknown" || manufacturerLabel->text().contains("Checking")) deviceManufacturer = "Unknown (ADB Fail)";
-             if (deviceModel == "Unknown" || modelLabel->text().contains("Checking")) deviceModel = "Unknown (ADB Fail)"; // Corrected variable name
+             if (deviceManufacturer == "Unknown" || manufacturerLabel->text().contains("Checking")) manufacturerLabel->setText("Manufacturer: Unknown (ADB Fail)");
+             if (deviceModel == "Unknown" || modelLabel->text().contains("Checking")) modelLabel->setText("Model: Unknown (ADB Fail)");
              updateDeviceDetailsLabels();
         }
-        // After ADB properties, if device is in Fastboot mode according to state check, get Fastboot variables
         if (deviceMode == "fastboot") {
-             runFastbootVariablesCheck(); // This will set currentRunningCommand again
+             runFastbootVariablesCheck();
         } else {
-             updateButtonStates();
              updateStatusBar("Detection complete.", 5000);
         }
 
@@ -376,22 +394,17 @@ void AndroidToolWindow::processFinished(int exitCode, QProcess::ExitStatus exitS
              parseFastbootVariablesOutput(mainProcess->readAllStandardOutput());
          } else {
             appendOutput("[WARNING] Failed to get Fastboot variables.", Qt::darkYellow);
-            if (deviceManufacturer == "Unknown" || manufacturerLabel->text().contains("Checking")) deviceManufacturer = "Unknown (Fastboot Fail)";
-             modelLabel->setText("Model: Unknown (Fastboot Fail)"); // FIX: Use ->setText
+            if (deviceManufacturer == "Unknown" || manufacturerLabel->text().contains("Checking")) manufacturerLabel->setText("Manufacturer: Unknown (Fastboot Fail)");
+             modelLabel->setText("Model: Unknown (Fastboot Fail)");
              updateDeviceDetailsLabels();
          }
-         updateButtonStates();
          updateStatusBar("Detection complete.", 5000);
-
-    } else {
-        updateButtonStates();
-        QTimer::singleShot(500, this, &AndroidToolWindow::checkDeviceState);
     }
 }
 
 void AndroidToolWindow::processErrorOccurred(QProcess::ProcessError error)
 {
-    QString errorString;
+     QString errorString;
     switch (error) {
         case QProcess::FailedToStart: errorString = "Failed to Start"; break;
         case QProcess::Crashed: errorString = "Crashed"; break;
@@ -401,19 +414,49 @@ void AndroidToolWindow::processErrorOccurred(QProcess::ProcessError error)
         case QProcess::UnknownError:
         default: errorString = "Unknown Error"; break;
     }
-    appendOutput(QString("[ERROR] Main Process Error: %1 (%2)").arg(errorString, mainProcess->errorString()), Qt::darkRed);
+    qDebug() << "Main Process Error: " << errorString << mainProcess->errorString();
     updateStatusBar("Main Process Error.", 5000);
 
-    currentRunningCommand.clear();
+    if (error == QProcess::FailedToStart) {
+        cancelButton->hide();
+        updateButtonStates();
+
+        QString program = mainProcess->program();
+         if (program == "adb" || program == "fastboot") {
+             static QMap<QString, bool> toolCriticalWarningShown;
+             if (!toolCriticalWarningShown.value(program, false)) {
+                appendOutput(QString("[CRITICAL] '%1' command not found. Ensure Android SDK Platform-Tools are in your PATH.").arg(program), Qt::darkRed);
+                QMessageBox::critical(this, "Tool Error", QString("'%1' executable not found.\nPlease ensure the Android SDK Platform-Tools are installed and added to your system's PATH environment variable.").arg(program));
+                toolCriticalWarningShown[program] = true;
+             }
+         }
+         QTimer::singleShot(500, this, &AndroidToolWindow::checkDeviceState);
+    }
+}
+
+void AndroidToolWindow::on_mainProcess_started()
+{
+    qDebug() << "Main process started for command:" << currentRunningCommand;
+    cancelButton->show();
     updateButtonStates();
-    QTimer::singleShot(500, this, &AndroidToolWindow::checkDeviceState);
+}
+
+// --- New Cancel Button Slot Implementation ---
+void AndroidToolWindow::on_cancelButton_clicked()
+{
+    if (mainProcess->state() != QProcess::NotRunning) {
+        appendOutput(QString("[*] Attempting to cancel command: %1").arg(currentRunningCommand), Qt::darkYellow);
+        updateStatusBar("Cancelling operation...", 0);
+        mainProcess->kill();
+    } else {
+        appendOutput("[WARNING] No main process is currently running to cancel.", Qt::darkYellow);
+    }
 }
 
 
 // --- State Check QProcess Slots Implementation ---
-void AndroidToolWindow::stateCheckProcessReadyReadStandardOutput() { /* Optional: append to log if verbose */ }
-void AndroidToolWindow::stateCheckProcessReadyReadStandardError() { /* Optional: append errors to log if verbose */ }
-
+void AndroidToolWindow::stateCheckProcessReadyReadStandardOutput() { /* ... */ }
+void AndroidToolWindow::stateCheckProcessReadyReadStandardError() { /* ... */ }
 void AndroidToolWindow::stateCheckProcessFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
     if (mainProcess->state() != QProcess::NotRunning) {
@@ -483,7 +526,7 @@ void AndroidToolWindow::stateCheckProcessErrorOccurred(QProcess::ProcessError er
         case QProcess::Crashed: errorString = "Crashed"; break;
         case QProcess::Timedout: errorString = "Timed Out"; break;
         case QProcess::ReadError: errorString = "Read Error"; break;
-        case QProcess::WriteError: errorString = "WriteError"; break;
+        case QProcess::WriteError: errorString = "Write Error"; break;
         case QProcess::UnknownError:
         default: errorString = "Unknown Error"; break;
     }
@@ -495,11 +538,11 @@ void AndroidToolWindow::stateCheckProcessErrorOccurred(QProcess::ProcessError er
              if (program == "adb") manufacturerLabel->setText("Manufacturer: ADB Not Found");
              if (program == "fastboot") modelLabel->setText("Model: Fastboot Not Found");
 
-             static bool toolsCriticalWarningShown = false;
-             if (!toolsCriticalWarningShown) {
+             static QMap<QString, bool> toolCriticalWarningShown;
+             if (!toolCriticalWarningShown.value(program, false)) {
                  appendOutput(QString("[CRITICAL] '%1' command not found. Ensure Android SDK Platform-Tools are in your PATH.").arg(program), Qt::darkRed);
                  QMessageBox::critical(this, "Tool Error", QString("'%1' executable not found.\nPlease ensure the Android SDK Platform-Tools are installed and added to your system's PATH environment variable.").arg(program));
-                 toolsCriticalWarningShown = true;
+                 toolCriticalWarningShown[program] = true;
              }
          }
     }
@@ -714,7 +757,6 @@ void AndroidToolWindow::loadConfig(const QString& filePath) {
     if (!configFile.exists()) {
         appendOutput(QString("[WARNING] Configuration file not found: %1. Using default commands only.").arg(filePath), Qt::darkYellow);
         updateStatusBar(QString("Config not found: %1. Using defaults.").arg(filePath), 5000);
-        // Populate the default_config with built-in values mirroring Python if file not found
         loadedConfig.default_config.unlock_command = "fastboot oem unlock";
         loadedConfig.default_config.lock_command = "fastboot oem lock";
         loadedConfig.default_config.adb_reboot_bootloader_command = "adb reboot bootloader";
@@ -738,7 +780,6 @@ void AndroidToolWindow::loadConfig(const QString& filePath) {
             appendOutput("[*] Loaded default configuration from file.", Qt::gray);
         } else {
              appendOutput("[WARNING] 'default' entry not found in config file. Using built-in defaults for commands/warnings.", Qt::darkYellow);
-              // Manually populate the default_config with built-in values if file didn't have a default
              loadedConfig.default_config.unlock_command = "fastboot oem unlock";
              loadedConfig.default_config.lock_command = "fastboot oem lock";
              loadedConfig.default_config.adb_reboot_bootloader_command = "adb reboot bootloader";
@@ -752,7 +793,6 @@ void AndroidToolWindow::loadConfig(const QString& filePath) {
              loadedConfig.default_config.notes = "Built-in default configuration.";
         }
 
-        // Load device-specific configs
         for (YAML::const_iterator it = config.begin(); it != config.end(); ++it) {
             QString deviceName = QString::fromStdString(it->first.as<std::string>());
             if (deviceName.toLower() == "default") continue;
@@ -771,41 +811,33 @@ void AndroidToolWindow::loadConfig(const QString& filePath) {
     } catch (const YAML::BadFile& e) {
         appendOutput(QString("[ERROR] Failed to load config file %1: %2").arg(filePath, e.what()), Qt::darkRed);
         updateStatusBar(QString("Config load error: %1").arg(e.what()), 5000);
-        // Default config is already populated if file didn't exist/failed to load
     } catch (const YAML::ParserException& e) {
         appendOutput(QString("[ERROR] Failed to parse config file %1: %2").arg(filePath, e.what()), Qt::darkRed);
         updateStatusBar(QString("Config parse error: %1").arg(e.what()), 5000);
-         // Default config is already populated
     } catch (const std::exception& e) {
         appendOutput(QString("[ERROR] An unexpected error occurred loading config: %1").arg(e.what()), Qt::darkRed);
         updateStatusBar(QString("Config error: %1").arg(e.what()), 5000);
-         // Default config is already populated
     } catch (...) {
          appendOutput("[ERROR] An unknown error occurred loading config.", Qt::darkRed);
          updateStatusBar("Config error: Unknown.", 5000);
-         // Default config is already populated
     }
 }
 
-// --- FIX: getDeviceConfig implementation (return by value) ---
-DeviceConfig AndroidToolWindow::getDeviceConfig() const { // Return by value
-    // Try exact match (manufacturer + model)
+DeviceConfig AndroidToolWindow::getDeviceConfig() const {
     QString exactKey = deviceManufacturer.toLower() + " " + deviceModel.toLower();
     if (!deviceManufacturer.isEmpty() && !deviceModel.isEmpty() && loadedConfig.devices.contains(exactKey)) {
         qDebug() << "Using config for:" << exactKey;
-        return loadedConfig.devices.value(exactKey); // Returns a copy
+        return loadedConfig.devices.value(exactKey);
     }
 
-    // Try manufacturer match
     QString manufacturerKey = deviceManufacturer.toLower();
     if (!deviceManufacturer.isEmpty() && loadedConfig.devices.contains(manufacturerKey)) {
          qDebug() << "Using config for manufacturer:" << manufacturerKey;
-         return loadedConfig.devices.value(manufacturerKey); // Returns a copy
+         return loadedConfig.devices.value(manufacturerKey);
     }
 
-    // Fallback to default
     qDebug() << "Using default config.";
-    return loadedConfig.default_config; // Returns a copy
+    return loadedConfig.default_config;
 }
 
 
@@ -821,13 +853,10 @@ void AndroidToolWindow::on_detectButton_clicked()
 
      updateStatusBar("Starting device detection...", 0);
 
-     // Reset known details before starting detection process
      deviceManufacturer = "Unknown";
      deviceModel = "Unknown";
      updateDeviceDetailsLabels();
 
-
-     // Start detection based on current mode or try ADB first
      if (deviceMode == "adb" || deviceMode == "recovery" || deviceMode == "sideload") {
           runAdbPropertiesCheck();
      } else if (deviceMode == "fastboot") {
@@ -838,7 +867,6 @@ void AndroidToolWindow::on_detectButton_clicked()
      }
 }
 
-// --- FIX: on_unlockButton_clicked implementation (uses config) ---
 void AndroidToolWindow::on_unlockButton_clicked()
 {
      appendOutput("[*] 'Unlock Bootloader' button clicked.", Qt::blue);
@@ -852,8 +880,7 @@ void AndroidToolWindow::on_unlockButton_clicked()
          return;
      }
 
-     // --- Get config and show warning ---
-     const DeviceConfig& config = getDeviceConfig(); // Use const reference here
+     const DeviceConfig& config = getDeviceConfig();
      QString warning = config.unlock_warning;
      if (warning.isEmpty()) warning = "Unlocking will erase all data. Proceed with caution.";
 
@@ -872,7 +899,6 @@ void AndroidToolWindow::on_unlockButton_clicked()
      appendOutput("[*] User confirmed unlock warning.", Qt::darkYellow);
      updateStatusBar("Unlocking bootloader...", 0);
 
-     // --- Get command from config and start process ---
      QString command = config.unlock_command;
      if (command.isEmpty()) {
          appendOutput("[ERROR] Unlock command not defined in config or default!", Qt::darkRed);
@@ -891,10 +917,8 @@ void AndroidToolWindow::on_unlockButton_clicked()
 
      currentRunningCommand = "unlock";
      mainProcess->start(program, arguments);
-     updateButtonStates();
 }
 
-// --- FIX: on_lockButton_clicked implementation (uses config) ---
 void AndroidToolWindow::on_lockButton_clicked()
 {
      appendOutput("[*] 'Lock Bootloader' button clicked.", Qt::blue);
@@ -908,8 +932,7 @@ void AndroidToolWindow::on_lockButton_clicked()
          return;
      }
 
-     // --- Get config and show warning ---
-     const DeviceConfig& config = getDeviceConfig(); // Use const reference here
+     const DeviceConfig& config = getDeviceConfig();
      QString warning = config.lock_warning;
      if (warning.isEmpty()) warning = "Locking will erase all data. Ensure backups.";
 
@@ -928,7 +951,6 @@ void AndroidToolWindow::on_lockButton_clicked()
      appendOutput("[*] User confirmed lock warning.", Qt::darkYellow);
      updateStatusBar("Locking bootloader...", 0);
 
-     // --- Get command from config and start process ---
      QString command = config.lock_command;
       if (command.isEmpty()) {
          appendOutput("[ERROR] Lock command not defined in config or default!", Qt::darkRed);
@@ -946,10 +968,8 @@ void AndroidToolWindow::on_lockButton_clicked()
 
      currentRunningCommand = "lock";
      mainProcess->start(program, arguments);
-     updateButtonStates();
 }
 
-// --- FIX: on_recoveryButton_clicked implementation (uses config) ---
 void AndroidToolWindow::on_recoveryButton_clicked()
 {
     appendOutput("[*] 'Flash Recovery' button clicked.", Qt::blue);
@@ -963,7 +983,6 @@ void AndroidToolWindow::on_recoveryButton_clicked()
          return;
      }
 
-    // --- Get config ---
     const DeviceConfig& config = getDeviceConfig();
     QString partition = config.recovery_partition;
     if (partition.isEmpty()) {
@@ -972,9 +991,6 @@ void AndroidToolWindow::on_recoveryButton_clicked()
          return;
     }
 
-
-    // --- Get File Path ---
-    // TODO: Get file filter and default dir from config (YAML)
     QString recoveryPath = QFileDialog::getOpenFileName(this, QString("Select Recovery Image (.img) for '%1'").arg(partition), QDir::homePath(), "Image Files (*.img);;All Files (*)");
 
     if (recoveryPath.isEmpty()) {
@@ -985,8 +1001,6 @@ void AndroidToolWindow::on_recoveryButton_clicked()
 
     appendOutput(QString("[*] Selected file: %1").arg(recoveryPath), Qt::blue);
 
-    // --- Show Confirmation ---
-    // TODO: Get warning from config (YAML) if different from generic
     QMessageBox::StandardButton reply = QMessageBox::question(this, "Confirm Flash Recovery",
                                      QString("Are you sure you want to flash '%1' to the '%2' partition?\n\n").arg(QFileInfo(recoveryPath).fileName(), partition) +
                                      "WARNING: Flashing an incorrect image can brick your device!",
@@ -1001,18 +1015,14 @@ void AndroidToolWindow::on_recoveryButton_clicked()
     appendOutput("[*] User confirmed recovery flash.", Qt::darkYellow);
     updateStatusBar(QString("Flashing %1...").arg(QFileInfo(recoveryPath).fileName()), 0);
 
-    // --- Send Flash Command ---
-    // TODO: Get command template from config (YAML) if needed, or hardcode 'fastboot flash'
     QString program = "fastboot";
     QStringList arguments;
     arguments << "flash" << partition << recoveryPath;
 
     currentRunningCommand = "flash_recovery";
     mainProcess->start(program, arguments);
-    updateButtonStates();
 }
 
-// --- FIX: on_magiskButton_clicked implementation (uses config) ---
 void AndroidToolWindow::on_magiskButton_clicked()
 {
     appendOutput("[*] 'Flash Patched Boot' button clicked.", Qt::blue);
@@ -1026,7 +1036,6 @@ void AndroidToolWindow::on_magiskButton_clicked()
          return;
      }
 
-     // --- Get config ---
     const DeviceConfig& config = getDeviceConfig();
     QString partition = config.boot_partition;
     if (partition.isEmpty()) {
@@ -1035,8 +1044,6 @@ void AndroidToolWindow::on_magiskButton_clicked()
          return;
     }
 
-     // --- Get File Path ---
-    // TODO: Get file filter and default dir from config (YAML)
     QString bootPath = QFileDialog::getOpenFileName(this, QString("Select Patched Boot Image (.img) for '%1'").arg(partition), QDir::homePath(), "Image Files (*.img);;All Files (*)");
 
     if (bootPath.isEmpty()) {
@@ -1047,8 +1054,6 @@ void AndroidToolWindow::on_magiskButton_clicked()
 
     appendOutput(QString("[*] Selected file: %1").arg(bootPath), Qt::blue);
 
-     // --- Show Confirmation ---
-    // TODO: Get warning from config (YAML) if different from generic
      QMessageBox::StandardButton reply = QMessageBox::question(this, "Confirm Flash Patched Boot",
                                      QString("Are you sure you want to flash '%1' to the '%2' partition?\n\n").arg(QFileInfo(bootPath).fileName(), partition) +
                                      "WARNING: Flashing an incorrect or unpatched boot image can cause boot loops!",
@@ -1063,19 +1068,14 @@ void AndroidToolWindow::on_magiskButton_clicked()
     appendOutput("[*] User confirmed patched boot flash.", Qt::darkYellow);
     updateStatusBar(QString("Flashing %1...").arg(QFileInfo(bootPath).fileName()), 0);
 
-
-    // --- Send Flash Command ---
-    // TODO: Get command template from config (YAML) if needed, or hardcode 'fastboot flash'
     QString program = "fastboot";
     QStringList arguments;
     arguments << "flash" << partition << bootPath;
 
     currentRunningCommand = "flash_boot";
     mainProcess->start(program, arguments);
-    updateButtonStates();
 }
 
-// --- FIX: on_rebootSystemButton_clicked implementation (uses config) ---
 void AndroidToolWindow::on_rebootSystemButton_clicked()
 {
     appendOutput("[*] 'Reboot System' button clicked.", Qt::blue);
@@ -1090,9 +1090,8 @@ void AndroidToolWindow::on_rebootSystemButton_clicked()
      const DeviceConfig& config = getDeviceConfig();
 
      if (deviceMode == "adb" || deviceMode == "recovery" || deviceMode == "sideload") {
-          // Use command from config, fallback to hardcoded
           QString command = config.adb_reboot_system_command;
-          if (command.isEmpty()) command = "adb reboot"; // Fallback
+          if (command.isEmpty()) command = "adb reboot";
 
           QStringList commandParts = command.split(' ', Qt::SkipEmptyParts);
           if (commandParts.isEmpty()) {
@@ -1105,9 +1104,8 @@ void AndroidToolWindow::on_rebootSystemButton_clicked()
           commandId = "reboot_adb";
 
      } else if (deviceMode == "fastboot") {
-         // Use command from config, fallback to hardcoded
          QString command = config.fastboot_reboot_command;
-         if (command.isEmpty()) command = "fastboot reboot"; // Fallback
+         if (command.isEmpty()) command = "fastboot reboot";
 
           QStringList commandParts = command.split(' ', Qt::SkipEmptyParts);
           if (commandParts.isEmpty()) {
@@ -1127,11 +1125,9 @@ void AndroidToolWindow::on_rebootSystemButton_clicked()
 
     currentRunningCommand = commandId;
     mainProcess->start(program, arguments);
-    updateButtonStates();
     updateStatusBar("Rebooting system...", 0);
 }
 
-// --- FIX: on_rebootRecoveryButton_clicked implementation (uses config) ---
 void AndroidToolWindow::on_rebootRecoveryButton_clicked()
 {
     appendOutput("[*] 'Reboot Recovery' button clicked.", Qt::blue);
@@ -1142,7 +1138,7 @@ void AndroidToolWindow::on_rebootRecoveryButton_clicked()
      if (deviceMode == "adb" || deviceMode == "recovery" || deviceMode == "sideload") {
          const DeviceConfig& config = getDeviceConfig();
          QString command = config.adb_reboot_recovery_command;
-         if (command.isEmpty()) command = "adb reboot recovery"; // Fallback
+         if (command.isEmpty()) command = "adb reboot recovery";
 
          QStringList commandParts = command.split(' ', Qt::SkipEmptyParts);
          if (commandParts.isEmpty()) {
@@ -1156,7 +1152,6 @@ void AndroidToolWindow::on_rebootRecoveryButton_clicked()
 
          currentRunningCommand = "reboot_recovery";
          mainProcess->start(program, arguments);
-         updateButtonStates();
          updateStatusBar("Rebooting to recovery...", 0);
      } else {
           appendOutput("[WARNING] Reboot Recovery requires ADB, Recovery, or Sideload mode.", Qt::darkYellow);
@@ -1164,7 +1159,6 @@ void AndroidToolWindow::on_rebootRecoveryButton_clicked()
      }
 }
 
-// --- FIX: on_rebootBootloaderButton_clicked implementation (uses config) ---
 void AndroidToolWindow::on_rebootBootloaderButton_clicked()
 {
     appendOutput("[*] 'Reboot Bootloader' button clicked.", Qt::blue);
@@ -1175,7 +1169,7 @@ void AndroidToolWindow::on_rebootBootloaderButton_clicked()
      if (deviceMode == "adb" || deviceMode == "recovery" || deviceMode == "sideload") {
          const DeviceConfig& config = getDeviceConfig();
          QString command = config.adb_reboot_bootloader_command;
-         if (command.isEmpty()) command = "adb reboot bootloader"; // Fallback
+         if (command.isEmpty()) command = "adb reboot bootloader";
 
          QStringList commandParts = command.split(' ', Qt::SkipEmptyParts);
          if (commandParts.isEmpty()) {
@@ -1188,7 +1182,6 @@ void AndroidToolWindow::on_rebootBootloaderButton_clicked()
 
          currentRunningCommand = "reboot_bootloader";
          mainProcess->start(program, arguments);
-         updateButtonStates();
          updateStatusBar("Rebooting to bootloader...", 0);
      } else {
           appendOutput("[WARNING] Reboot Bootloader requires ADB, Recovery, or Sideload mode.", Qt::darkYellow);
@@ -1209,8 +1202,7 @@ void AndroidToolWindow::on_sideloadButton_clicked()
          return;
      }
 
-     // --- Get File Path ---
-    // TODO: Get file filter and default dir from config (YAML)
+     // TODO: Get file filter and default dir from config (YAML)
      QString zipPath = QFileDialog::getOpenFileName(this, "Select ROM/ZIP File (.zip)", QDir::homePath(), "ZIP Files (*.zip);;All Files (*)");
 
      if (zipPath.isEmpty()) {
@@ -1221,7 +1213,6 @@ void AndroidToolWindow::on_sideloadButton_clicked()
      appendOutput(QString("[*] Selected file: %1").arg(zipPath), Qt::blue);
 
 
-     // --- Show Confirmation ---
      // TODO: Get warning message from config (YAML)
      QMessageBox::StandardButton reply = QMessageBox::question(this, "Confirm ADB Sideload",
                                       QString("Are you sure you want to sideload '%1'?\n\n").arg(QFileInfo(zipPath).fileName()) +
@@ -1237,7 +1228,6 @@ void AndroidToolWindow::on_sideloadButton_clicked()
      updateStatusBar(QString("Sideloading %1...").arg(QFileInfo(zipPath).fileName()), 0);
 
 
-     // --- Send Sideload Command ---
      // TODO: Check config for custom sideload command? Usually just "adb sideload"
      QString program = "adb";
      QStringList arguments;
@@ -1245,7 +1235,6 @@ void AndroidToolWindow::on_sideloadButton_clicked()
 
      currentRunningCommand = "sideload";
      mainProcess->start(program, arguments);
-     updateButtonStates();
 }
 
 void AndroidToolWindow::on_adbPushButton_clicked()
@@ -1261,7 +1250,6 @@ void AndroidToolWindow::on_adbPushButton_clicked()
          return;
      }
 
-     // --- Get Source File Path (Local) ---
      // TODO: Get file filter and default dir from config (YAML)
      QString sourcePath = QFileDialog::getOpenFileName(this, "Select Source File to Push", QDir::homePath(), "All Files (*)");
 
@@ -1272,13 +1260,11 @@ void AndroidToolWindow::on_adbPushButton_clicked()
      }
      appendOutput(QString("[*] Selected source file: %1").arg(sourcePath), Qt::blue);
 
-     // --- Get Destination Path (On Device) ---
-     // Use QInputDialog to ask for the destination path on the device
      // TODO: Provide example paths or default based on config (YAML)
      bool ok;
      QString destinationPathOnDevice = QInputDialog::getText(this, "ADB Push Destination",
                                          "Enter destination path on device:", QLineEdit::Normal,
-                                         "/sdcard/", &ok); // Example default
+                                         "/sdcard/", &ok);
 
      if (!ok || destinationPathOnDevice.isEmpty()) {
          appendOutput("[*] Destination path selection cancelled or empty.", Qt::gray);
@@ -1288,8 +1274,7 @@ void AndroidToolWindow::on_adbPushButton_clicked()
      appendOutput(QString("[*] Destination path on device: %1").arg(destinationPathOnDevice), Qt::blue);
 
 
-     // --- Show Confirmation (Optional but Recommended for Push) ---
-      // TODO: Get warning message from config (YAML)
+     // TODO: Get warning message from config (YAML)
       QMessageBox::StandardButton reply = QMessageBox::question(this, "Confirm ADB Push",
                                       QString("Are you sure you want to push '%1' to '%2' on the device?\n\n").arg(QFileInfo(sourcePath).fileName(), destinationPathOnDevice),
                                       QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
@@ -1303,16 +1288,13 @@ void AndroidToolWindow::on_adbPushButton_clicked()
      updateStatusBar(QString("Pushing %1...").arg(QFileInfo(sourcePath).fileName()), 0);
 
 
-     // --- Send Push Command ---
-     // TODO: Get command from config (YAML) - Assumes 'adb push <source> <destination>' format
-     // Check config for custom push command? Usually just "adb push"
+     // TODO: Check config for custom push command? Usually just "adb push"
      QString program = "adb";
      QStringList arguments;
      arguments << "push" << sourcePath << destinationPathOnDevice;
 
      currentRunningCommand = "adb_push";
      mainProcess->start(program, arguments);
-     updateButtonStates();
 }
 
 void AndroidToolWindow::on_adbPullButton_clicked()
@@ -1328,13 +1310,11 @@ void AndroidToolWindow::on_adbPullButton_clicked()
          return;
      }
 
-     // --- Get Source Path on Device (Input Dialog) ---
-     // Use QInputDialog to ask for the source path on the device
      // TODO: Provide example paths or default based on config (YAML)
      bool ok;
      QString sourcePathOnDevice = QInputDialog::getText(this, "ADB Pull Source",
                                          "Enter source path on device:", QLineEdit::Normal,
-                                         "/sdcard/mylog.txt", &ok); // Example default
+                                         "/sdcard/mylog.txt", &ok);
 
      if (!ok || sourcePathOnDevice.isEmpty()) {
          appendOutput("[*] Source path selection cancelled or empty.", Qt::gray);
@@ -1344,8 +1324,6 @@ void AndroidToolWindow::on_adbPullButton_clicked()
      appendOutput(QString("[*] Source path on device: %1").arg(sourcePathOnDevice), Qt::blue);
 
 
-     // --- Get Destination Local Folder Path ---
-     // Use getExistingDirectory to select a folder
      // TODO: Get default dir from config (YAML)
      QString destinationFolderPath = QFileDialog::getExistingDirectory(this, "Select Destination Folder to Save File", QDir::homePath());
 
@@ -1356,8 +1334,7 @@ void AndroidToolWindow::on_adbPullButton_clicked()
      }
      appendOutput(QString("[*] Selected destination folder: %1").arg(destinationFolderPath), Qt::blue);
 
-     // --- Show Confirmation ---
-      // TODO: Get warning message from config (YAML)
+     // TODO: Get warning message from config (YAML)
       QMessageBox::StandardButton reply = QMessageBox::question(this, "Confirm ADB Pull",
                                       QString("Are you sure you want to pull '%1' from the device to '%2' on the device?\n\n").arg(sourcePathOnDevice, destinationFolderPath),
                                       QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
@@ -1372,17 +1349,15 @@ void AndroidToolWindow::on_adbPullButton_clicked()
      updateStatusBar(QString("Pulling %1...").arg(sourceFileInfo.fileName()), 0);
 
 
-     // --- Send Pull Command ---
-     // TODO: Get command from config (YAML) - Assumes 'adb pull <source> <destination>' format
-     // Check config for custom pull command? Usually just "adb pull"
+     // TODO: Check config for custom pull command? Usually just "adb pull"
      QString program = "adb";
      QStringList arguments;
      arguments << "pull" << sourcePathOnDevice << destinationFolderPath;
 
      currentRunningCommand = "adb_pull";
      mainProcess->start(program, arguments);
-     updateButtonStates();
 }
+
 
 // --- UI Slots Implementation ---
 void AndroidToolWindow::on_clearLogAction_triggered()

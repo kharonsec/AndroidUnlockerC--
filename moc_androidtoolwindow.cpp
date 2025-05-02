@@ -1,5 +1,5 @@
 /****************************************************************************
-** Meta object code from reading C++ file 'androidtoolwidget.h'
+** Meta object code from reading C++ file 'androidtoolwindow.h'
 **
 ** Created by: The Qt Meta Object Compiler version 67 (Qt 5.15.3)
 **
@@ -7,11 +7,11 @@
 *****************************************************************************/
 
 #include <memory>
-#include "androidtoolwidget.h"
+#include "androidtoolwindow.h"
 #include <QtCore/qbytearray.h>
 #include <QtCore/qmetatype.h>
 #if !defined(Q_MOC_OUTPUT_REVISION)
-#error "The header file 'androidtoolwidget.h' doesn't include <QObject>."
+#error "The header file 'androidtoolwindow.h' doesn't include <QObject>."
 #elif Q_MOC_OUTPUT_REVISION != 67
 #error "This file was generated using the moc from 5.15.3. It"
 #error "cannot be used with the include files from this version of Qt."
@@ -21,18 +21,18 @@
 QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
-struct qt_meta_stringdata_AndroidToolWidget_t {
-    QByteArrayData data[27];
-    char stringdata0[634];
+struct qt_meta_stringdata_AndroidToolWindow_t {
+    QByteArrayData data[28];
+    char stringdata0[662];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
-    qptrdiff(offsetof(qt_meta_stringdata_AndroidToolWidget_t, stringdata0) + ofs \
+    qptrdiff(offsetof(qt_meta_stringdata_AndroidToolWindow_t, stringdata0) + ofs \
         - idx * sizeof(QByteArrayData)) \
     )
-static const qt_meta_stringdata_AndroidToolWidget_t qt_meta_stringdata_AndroidToolWidget = {
+static const qt_meta_stringdata_AndroidToolWindow_t qt_meta_stringdata_AndroidToolWindow = {
     {
-QT_MOC_LITERAL(0, 0, 17), // "AndroidToolWidget"
+QT_MOC_LITERAL(0, 0, 17), // "AndroidToolWindow"
 QT_MOC_LITERAL(1, 18, 23), // "on_detectButton_clicked"
 QT_MOC_LITERAL(2, 42, 0), // ""
 QT_MOC_LITERAL(3, 43, 23), // "on_unlockButton_clicked"
@@ -58,10 +58,11 @@ QT_MOC_LITERAL(22, 479, 40), // "stateCheckProcessReadyReadSta..."
 QT_MOC_LITERAL(23, 520, 39), // "stateCheckProcessReadyReadSta..."
 QT_MOC_LITERAL(24, 560, 25), // "stateCheckProcessFinished"
 QT_MOC_LITERAL(25, 586, 30), // "stateCheckProcessErrorOccurred"
-QT_MOC_LITERAL(26, 617, 16) // "checkDeviceState"
+QT_MOC_LITERAL(26, 617, 16), // "checkDeviceState"
+QT_MOC_LITERAL(27, 634, 27) // "on_clearLogAction_triggered"
 
     },
-    "AndroidToolWidget\0on_detectButton_clicked\0"
+    "AndroidToolWindow\0on_detectButton_clicked\0"
     "\0on_unlockButton_clicked\0on_lockButton_clicked\0"
     "on_recoveryButton_clicked\0"
     "on_magiskButton_clicked\0"
@@ -80,17 +81,17 @@ QT_MOC_LITERAL(26, 617, 16) // "checkDeviceState"
     "stateCheckProcessReadyReadStandardError\0"
     "stateCheckProcessFinished\0"
     "stateCheckProcessErrorOccurred\0"
-    "checkDeviceState"
+    "checkDeviceState\0on_clearLogAction_triggered"
 };
 #undef QT_MOC_LITERAL
 
-static const uint qt_meta_data_AndroidToolWidget[] = {
+static const uint qt_meta_data_AndroidToolWindow[] = {
 
  // content:
        8,       // revision
        0,       // classname
        0,    0, // classinfo
-      20,   14, // methods
+      21,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -98,26 +99,27 @@ static const uint qt_meta_data_AndroidToolWidget[] = {
        0,       // signalCount
 
  // slots: name, argc, parameters, tag, flags
-       1,    0,  114,    2, 0x08 /* Private */,
-       3,    0,  115,    2, 0x08 /* Private */,
-       4,    0,  116,    2, 0x08 /* Private */,
-       5,    0,  117,    2, 0x08 /* Private */,
-       6,    0,  118,    2, 0x08 /* Private */,
-       7,    0,  119,    2, 0x08 /* Private */,
-       8,    0,  120,    2, 0x08 /* Private */,
-       9,    0,  121,    2, 0x08 /* Private */,
-      10,    0,  122,    2, 0x08 /* Private */,
-      11,    0,  123,    2, 0x08 /* Private */,
-      12,    0,  124,    2, 0x08 /* Private */,
-      13,    0,  125,    2, 0x08 /* Private */,
-      14,    0,  126,    2, 0x08 /* Private */,
-      15,    2,  127,    2, 0x08 /* Private */,
-      19,    1,  132,    2, 0x08 /* Private */,
-      22,    0,  135,    2, 0x08 /* Private */,
-      23,    0,  136,    2, 0x08 /* Private */,
-      24,    2,  137,    2, 0x08 /* Private */,
-      25,    1,  142,    2, 0x08 /* Private */,
-      26,    0,  145,    2, 0x08 /* Private */,
+       1,    0,  119,    2, 0x08 /* Private */,
+       3,    0,  120,    2, 0x08 /* Private */,
+       4,    0,  121,    2, 0x08 /* Private */,
+       5,    0,  122,    2, 0x08 /* Private */,
+       6,    0,  123,    2, 0x08 /* Private */,
+       7,    0,  124,    2, 0x08 /* Private */,
+       8,    0,  125,    2, 0x08 /* Private */,
+       9,    0,  126,    2, 0x08 /* Private */,
+      10,    0,  127,    2, 0x08 /* Private */,
+      11,    0,  128,    2, 0x08 /* Private */,
+      12,    0,  129,    2, 0x08 /* Private */,
+      13,    0,  130,    2, 0x08 /* Private */,
+      14,    0,  131,    2, 0x08 /* Private */,
+      15,    2,  132,    2, 0x08 /* Private */,
+      19,    1,  137,    2, 0x08 /* Private */,
+      22,    0,  140,    2, 0x08 /* Private */,
+      23,    0,  141,    2, 0x08 /* Private */,
+      24,    2,  142,    2, 0x08 /* Private */,
+      25,    1,  147,    2, 0x08 /* Private */,
+      26,    0,  150,    2, 0x08 /* Private */,
+      27,    0,  151,    2, 0x08 /* Private */,
 
  // slots: parameters
     QMetaType::Void,
@@ -140,14 +142,15 @@ static const uint qt_meta_data_AndroidToolWidget[] = {
     QMetaType::Void, QMetaType::Int, 0x80000000 | 17,   16,   18,
     QMetaType::Void, 0x80000000 | 20,   21,
     QMetaType::Void,
+    QMetaType::Void,
 
        0        // eod
 };
 
-void AndroidToolWidget::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
+void AndroidToolWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
 {
     if (_c == QMetaObject::InvokeMetaMethod) {
-        auto *_t = static_cast<AndroidToolWidget *>(_o);
+        auto *_t = static_cast<AndroidToolWindow *>(_o);
         (void)_t;
         switch (_id) {
         case 0: _t->on_detectButton_clicked(); break;
@@ -170,47 +173,48 @@ void AndroidToolWidget::qt_static_metacall(QObject *_o, QMetaObject::Call _c, in
         case 17: _t->stateCheckProcessFinished((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< QProcess::ExitStatus(*)>(_a[2]))); break;
         case 18: _t->stateCheckProcessErrorOccurred((*reinterpret_cast< QProcess::ProcessError(*)>(_a[1]))); break;
         case 19: _t->checkDeviceState(); break;
+        case 20: _t->on_clearLogAction_triggered(); break;
         default: ;
         }
     }
 }
 
-QT_INIT_METAOBJECT const QMetaObject AndroidToolWidget::staticMetaObject = { {
-    QMetaObject::SuperData::link<QWidget::staticMetaObject>(),
-    qt_meta_stringdata_AndroidToolWidget.data,
-    qt_meta_data_AndroidToolWidget,
+QT_INIT_METAOBJECT const QMetaObject AndroidToolWindow::staticMetaObject = { {
+    QMetaObject::SuperData::link<QMainWindow::staticMetaObject>(),
+    qt_meta_stringdata_AndroidToolWindow.data,
+    qt_meta_data_AndroidToolWindow,
     qt_static_metacall,
     nullptr,
     nullptr
 } };
 
 
-const QMetaObject *AndroidToolWidget::metaObject() const
+const QMetaObject *AndroidToolWindow::metaObject() const
 {
     return QObject::d_ptr->metaObject ? QObject::d_ptr->dynamicMetaObject() : &staticMetaObject;
 }
 
-void *AndroidToolWidget::qt_metacast(const char *_clname)
+void *AndroidToolWindow::qt_metacast(const char *_clname)
 {
     if (!_clname) return nullptr;
-    if (!strcmp(_clname, qt_meta_stringdata_AndroidToolWidget.stringdata0))
+    if (!strcmp(_clname, qt_meta_stringdata_AndroidToolWindow.stringdata0))
         return static_cast<void*>(this);
-    return QWidget::qt_metacast(_clname);
+    return QMainWindow::qt_metacast(_clname);
 }
 
-int AndroidToolWidget::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+int AndroidToolWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 {
-    _id = QWidget::qt_metacall(_c, _id, _a);
+    _id = QMainWindow::qt_metacall(_c, _id, _a);
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 20)
+        if (_id < 21)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 20;
+        _id -= 21;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 20)
+        if (_id < 21)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 20;
+        _id -= 21;
     }
     return _id;
 }

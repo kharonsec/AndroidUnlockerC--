@@ -17,7 +17,7 @@ CXX           = g++
 DEFINES       = -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB
 CFLAGS        = -pipe -O2 -Wall -Wextra -D_REENTRANT -fPIC $(DEFINES)
 CXXFLAGS      = -pipe -O2 -std=gnu++11 -Wall -Wextra -D_REENTRANT -fPIC $(DEFINES)
-INCPATH       = -I. -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I. -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++
+INCPATH       = -I. -I/usr/include -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I. -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++
 QMAKE         = /usr/lib/qt5/bin/qmake
 DEL_FILE      = rm -f
 CHK_DIR_EXISTS= test -d
@@ -40,7 +40,7 @@ DISTNAME      = androidtool1.0.0
 DISTDIR = /home/eliott/Documents/github/AndroidUnlockerC++/.tmp/androidtool1.0.0
 LINK          = g++
 LFLAGS        = -Wl,-O1
-LIBS          = $(SUBLIBS) /usr/lib/x86_64-linux-gnu/libQt5Widgets.so /usr/lib/x86_64-linux-gnu/libQt5Gui.so /usr/lib/x86_64-linux-gnu/libQt5Core.so -lGL -lpthread   
+LIBS          = $(SUBLIBS) -lyaml-cpp /usr/lib/x86_64-linux-gnu/libQt5Widgets.so /usr/lib/x86_64-linux-gnu/libQt5Gui.so /usr/lib/x86_64-linux-gnu/libQt5Core.so -lGL -lpthread   
 AR            = ar cqs
 RANLIB        = 
 SED           = sed
@@ -53,10 +53,10 @@ OBJECTS_DIR   = ./
 ####### Files
 
 SOURCES       = main.cpp \
-		androidtoolwidget.cpp moc_androidtoolwidget.cpp
+		androidtoolwindow.cpp moc_androidtoolwindow.cpp
 OBJECTS       = main.o \
-		androidtoolwidget.o \
-		moc_androidtoolwidget.o
+		androidtoolwindow.o \
+		moc_androidtoolwindow.o
 DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/unix.conf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/linux.conf \
@@ -134,8 +134,8 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/exceptions.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/yacc.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/lex.prf \
-		androidtool.pro androidtoolwidget.h main.cpp \
-		androidtoolwidget.cpp
+		androidtool.pro androidtoolwindow.h main.cpp \
+		androidtoolwindow.cpp
 QMAKE_TARGET  = androidtool
 DESTDIR       = 
 TARGET        = androidtool
@@ -319,8 +319,8 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents androidtoolwidget.h $(DISTDIR)/
-	$(COPY_FILE) --parents main.cpp androidtoolwidget.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents androidtoolwindow.h $(DISTDIR)/
+	$(COPY_FILE) --parents main.cpp androidtoolwindow.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -352,18 +352,24 @@ compiler_moc_predefs_clean:
 moc_predefs.h: /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp
 	g++ -pipe -O2 -std=gnu++11 -Wall -Wextra -dM -E -o moc_predefs.h /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp
 
-compiler_moc_header_make_all: moc_androidtoolwidget.cpp
+compiler_moc_header_make_all: moc_androidtoolwindow.cpp
 compiler_moc_header_clean:
-	-$(DEL_FILE) moc_androidtoolwidget.cpp
-moc_androidtoolwidget.cpp: androidtoolwidget.h \
+	-$(DEL_FILE) moc_androidtoolwindow.cpp
+moc_androidtoolwindow.cpp: androidtoolwindow.h \
 		moc_predefs.h \
 		/usr/lib/qt5/bin/moc
-	/usr/lib/qt5/bin/moc $(DEFINES) --include /home/eliott/Documents/github/AndroidUnlockerC++/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/home/eliott/Documents/github/AndroidUnlockerC++ -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/11 -I/usr/include/x86_64-linux-gnu/c++/11 -I/usr/include/c++/11/backward -I/usr/lib/gcc/x86_64-linux-gnu/11/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include androidtoolwidget.h -o moc_androidtoolwidget.cpp
+	/usr/lib/qt5/bin/moc $(DEFINES) --include /home/eliott/Documents/github/AndroidUnlockerC++/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/home/eliott/Documents/github/AndroidUnlockerC++ -I/usr/include -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/11 -I/usr/include/x86_64-linux-gnu/c++/11 -I/usr/include/c++/11/backward -I/usr/lib/gcc/x86_64-linux-gnu/11/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include androidtoolwindow.h -o moc_androidtoolwindow.cpp
 
 compiler_moc_objc_header_make_all:
 compiler_moc_objc_header_clean:
-compiler_moc_source_make_all:
+compiler_moc_source_make_all: main.moc
 compiler_moc_source_clean:
+	-$(DEL_FILE) main.moc
+main.moc: main.cpp \
+		moc_predefs.h \
+		/usr/lib/qt5/bin/moc
+	/usr/lib/qt5/bin/moc $(DEFINES) --include /home/eliott/Documents/github/AndroidUnlockerC++/moc_predefs.h -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++ -I/home/eliott/Documents/github/AndroidUnlockerC++ -I/usr/include -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/include/c++/11 -I/usr/include/x86_64-linux-gnu/c++/11 -I/usr/include/c++/11/backward -I/usr/lib/gcc/x86_64-linux-gnu/11/include -I/usr/local/include -I/usr/include/x86_64-linux-gnu -I/usr/include main.cpp -o main.moc
+
 compiler_uic_make_all:
 compiler_uic_clean:
 compiler_yacc_decl_make_all:
@@ -372,18 +378,18 @@ compiler_yacc_impl_make_all:
 compiler_yacc_impl_clean:
 compiler_lex_make_all:
 compiler_lex_clean:
-compiler_clean: compiler_moc_predefs_clean compiler_moc_header_clean 
+compiler_clean: compiler_moc_predefs_clean compiler_moc_header_clean compiler_moc_source_clean 
 
 ####### Compile
 
-main.o: main.cpp androidtoolwidget.h
+main.o: main.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o main.cpp
 
-androidtoolwidget.o: androidtoolwidget.cpp androidtoolwidget.h
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o androidtoolwidget.o androidtoolwidget.cpp
+androidtoolwindow.o: androidtoolwindow.cpp androidtoolwindow.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o androidtoolwindow.o androidtoolwindow.cpp
 
-moc_androidtoolwidget.o: moc_androidtoolwidget.cpp 
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_androidtoolwidget.o moc_androidtoolwidget.cpp
+moc_androidtoolwindow.o: moc_androidtoolwindow.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_androidtoolwindow.o moc_androidtoolwindow.cpp
 
 ####### Install
 

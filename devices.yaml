@@ -1,0 +1,80 @@
+# devices.yaml - Configuration file for Android Bootloader & Recovery Tool
+
+# --- Default Configuration ---
+# This section provides fallback commands and settings
+# that are used if no specific device match is found
+# based on the detected Manufacturer and Model.
+# Ensure all necessary keys are defined here if you rely on the default.
+default:
+  # Commands (Use the exact command string for adb or fastboot)
+  # The tool will split the string into program and arguments.
+  # Include '-s <serial>' here if you implement multi-device handling later.
+  unlock_command: "fastboot flashing unlock" # Common command for newer devices
+  lock_command: "fastboot flashing lock"   # Common command for newer devices
+
+  # ADB/Fastboot Reboot Commands (used by Reboot buttons)
+  adb_reboot_bootloader_command: "adb reboot bootloader"
+  adb_reboot_recovery_command: "adb reboot recovery"
+  adb_reboot_system_command: "adb reboot"
+  fastboot_reboot_command: "fastboot reboot"
+
+  # ADB Push/Pull/Sideload Commands (usually don't need custom config, but possible)
+  # If defined, the tool would use these strings instead of hardcoded "adb push", etc.
+  # adb_sideload_command: "adb sideload" # Example custom sideload command
+  # adb_push_command: "adb push"       # Example custom push command
+  # adb_pull_command: "adb pull"       # Example custom pull command
+
+
+  # Partition names (used by Flash buttons)
+  recovery_partition: "recovery" # Common name for recovery partition
+  boot_partition: "boot"       # Common name for boot partition
+  # Add other partition names if needed for flash operations (e.g., "dtbo", "vendor_boot")
+  # example_other_partition: "dtbo"
+
+
+  # Warning messages (shown before risky operations)
+  unlock_warning: "Unlocking the bootloader will wipe all user data (factory reset) and may void your warranty! Proceed with caution."
+  lock_warning: "Locking the bootloader will wipe all user data. Ensure you have backups before proceeding."
+  # You could add warnings for flash/sideload here if you wanted specific ones
+
+
+  # Optional notes about this config entry
+  notes: "This is the general default configuration."
+
+
+# --- Device-Specific Configurations ---
+# Add sections for specific devices or manufacturers.
+# The tool matches based on detected Manufacturer and Model (case-insensitive).
+# It tries "manufacturer model" first, then just "manufacturer".
+
+# Example: Google Pixel 5 (uses 'flashing' commands)
+# The key is "manufacturer model"
+"google pixel 5":
+  # Override default commands/partitions/warnings specifically for this device
+  unlock_command: "fastboot flashing unlock"
+  lock_command: "fastboot flashing lock"
+  # recovery_partition: "boot" # Example: On A/B devices, recovery might be flashed to boot
+  recovery_partition: "recovery" # Or keep the common name if it works
+  boot_partition: "boot"
+
+  # Custom warning message for this device
+  unlock_warning: "Unlocking your Pixel device will factory reset it and might affect SafetyNet or warranty status. Are you sure?"
+
+  notes: "Configuration tailored for Google Pixel 5."
+
+# Example: OnePlus devices (might use older 'oem' commands)
+# The key is just "manufacturer" - used if Model is unknown or "OnePlus ModelName" isn't matched
+"oneplus":
+  unlock_command: "fastboot oem unlock"
+  lock_command: "fastboot oem lock"
+  # You could also override partition names or warnings here
+  # recovery_partition: "recovery" # If different from default
+  # unlock_warning: "OnePlus specific unlock warning..."
+
+  notes: "Configuration for general OnePlus devices."
+
+# Add entries for other devices you want to support with specific commands
+# "xiaomi poco f3":
+#   unlock_command: "fastboot oem unlock" # Example
+#   recovery_partition: "recovery" # Example
+#   notes: "Config for Poco F3."

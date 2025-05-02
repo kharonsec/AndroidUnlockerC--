@@ -2,79 +2,128 @@
 
 # --- Default Configuration ---
 # This section provides fallback commands and settings
-# that are used if no specific device match is found
-# based on the detected Manufacturer and Model.
-# Ensure all necessary keys are defined here if you rely on the default.
+# that are used if no specific device match is found.
 default:
   # Commands (Use the exact command string for adb or fastboot)
-  # The tool will split the string into program and arguments.
-  # Include '-s <serial>' here if you implement multi-device handling later.
   unlock_command: "fastboot flashing unlock" # Common command for newer devices
   lock_command: "fastboot flashing lock"   # Common command for newer devices
 
-  # ADB/Fastboot Reboot Commands (used by Reboot buttons)
+  # ADB/Fastboot Reboot Commands
   adb_reboot_bootloader_command: "adb reboot bootloader"
   adb_reboot_recovery_command: "adb reboot recovery"
   adb_reboot_system_command: "adb reboot"
   fastboot_reboot_command: "fastboot reboot"
 
-  # ADB Push/Pull/Sideload Commands (usually don't need custom config, but possible)
-  # If defined, the tool would use these strings instead of hardcoded "adb push", etc.
-  # adb_sideload_command: "adb sideload" # Example custom sideload command
-  # adb_push_command: "adb push"       # Example custom push command
-  # adb_pull_command: "adb pull"       # Example custom pull command
-
-
-  # Partition names (used by Flash buttons)
-  recovery_partition: "recovery" # Common name for recovery partition
-  boot_partition: "boot"       # Common name for boot partition
-  # Add other partition names if needed for flash operations (e.g., "dtbo", "vendor_boot")
-  # example_other_partition: "dtbo"
-
-
-  # Warning messages (shown before risky operations)
-  unlock_warning: "Unlocking the bootloader will wipe all user data (factory reset) and may void your warranty! Proceed with caution."
-  lock_warning: "Locking the bootloader will wipe all user data. Ensure you have backups before proceeding."
-  # You could add warnings for flash/sideload here if you wanted specific ones
-
-
-  # Optional notes about this config entry
-  notes: "This is the general default configuration."
-
-
-# --- Device-Specific Configurations ---
-# Add sections for specific devices or manufacturers.
-# The tool matches based on detected Manufacturer and Model (case-insensitive).
-# It tries "manufacturer model" first, then just "manufacturer".
-
-# Example: Google Pixel 5 (uses 'flashing' commands)
-# The key is "manufacturer model"
-"google pixel 5":
-  # Override default commands/partitions/warnings specifically for this device
-  unlock_command: "fastboot flashing unlock"
-  lock_command: "fastboot flashing lock"
-  # recovery_partition: "boot" # Example: On A/B devices, recovery might be flashed to boot
-  recovery_partition: "recovery" # Or keep the common name if it works
+  # Partition names
+  recovery_partition: "recovery"
   boot_partition: "boot"
 
-  # Custom warning message for this device
-  unlock_warning: "Unlocking your Pixel device will factory reset it and might affect SafetyNet or warranty status. Are you sure?"
+  # Warning messages
+  unlock_warning: "Unlocking the bootloader will wipe all user data (factory reset) and may void your warranty! Proceed with caution."
+  lock_warning: "Locking the bootloader will wipe all user data. Ensure you have backups before proceeding."
 
-  notes: "Configuration tailored for Google Pixel 5."
+  notes: "General default configuration. May not work for all devices."
 
-# Example: OnePlus devices (might use older 'oem' commands)
-# The key is just "manufacturer" - used if Model is unknown or "OnePlus ModelName" isn't matched
-"oneplus":
-  unlock_command: "fastboot oem unlock"
-  lock_command: "fastboot oem lock"
-  # You could also override partition names or warnings here
-  # recovery_partition: "recovery" # If different from default
-  # unlock_warning: "OnePlus specific unlock warning..."
 
-  notes: "Configuration for general OnePlus devices."
+# --- Device-Specific Configurations for Xiaomi Mi Series (since Mi 5) ---
+# These entries use common commands found for these model lines,
+# but PARTITION NAMES can vary significantly, especially on A/B devices.
+# ALWAYS RESEARCH your specific model if these commands/partitions fail.
+# You MUST also go through Xiaomi's official 'Mi Unlock' process if required
+# before fastboot unlock commands will work on many devices.
 
-# Add entries for other devices you want to support with specific commands
-# "xiaomi poco f3":
-#   unlock_command: "fastboot oem unlock" # Example
-#   recovery_partition: "recovery" # Example
-#   notes: "Config for Poco F3."
+# Generic Xiaomi entry (fallback for Mi/Redmi/Poco if model not listed)
+"xiaomi":
+  unlock_command: "fastboot flashing unlock" # Most common modern unlock cmd for Xiaomi
+  lock_command: "fastboot flashing lock"   # Most common modern lock cmd for Xiaomi
+  # Partition names might be more specific per model
+  recovery_partition: "recovery"
+  boot_partition: "boot"
+  notes: "Generic Xiaomi config. Use this if your specific Mi model is not listed."
+
+# Mi 5 / Mi 5s / Mi 5s Plus
+"xiaomi mi 5":
+  unlock_command: "fastboot oem unlock" # Mi 5 series often used 'oem' unlock
+  lock_command: "fastboot oem lock"   # Mi 5 series often used 'oem' lock
+  # Inherits partitions/reboot/warnings from default or generic xiaomi
+  notes: "Config for Mi 5 series (using oem unlock)."
+
+# Mi 6
+"xiaomi mi 6":
+  unlock_command: "fastboot flashing unlock" # Likely 'flashing' unlock
+  lock_command: "fastboot flashing lock"
+  # Inherits other settings
+  notes: "Config for Mi 6."
+
+# Mi 8 / Mi 8 SE / Mi 8 Pro / Mi 8 Explorer
+"xiaomi mi 8": # Matches all Mi 8 variants
+  unlock_command: "fastboot flashing unlock"
+  lock_command: "fastboot flashing lock"
+  # Partition names like 'boot_a', 'boot_b', 'recovery_a', 'recovery_b' might be needed
+  # depending on A/B slot usage and command. 'boot' and 'recovery' often work by targeting current slot.
+  recovery_partition: "recovery"
+  boot_partition: "boot"
+  notes: "Config for Mi 8 series (A/B slot possible, check partition names if flashing fails)."
+
+# Mi 9 / Mi 9 SE / Mi 9 Pro / Mi 9 Lite
+"xiaomi mi 9": # Matches all Mi 9 variants
+  unlock_command: "fastboot flashing unlock"
+  lock_command: "fastboot flashing lock"
+  # Partition names similar to Mi 8
+  recovery_partition: "recovery"
+  boot_partition: "boot"
+  notes: "Config for Mi 9 series (A/B slot possible)."
+
+# Mi 10 / Mi 10 Pro / Mi 10 Lite / Mi 10 Ultra
+"xiaomi mi 10": # Matches all Mi 10 variants
+  unlock_command: "fastboot flashing unlock"
+  lock_command: "fastboot flashing lock"
+  recovery_partition: "recovery"
+  boot_partition: "boot"
+  notes: "Config for Mi 10 series."
+
+# Mi 11 / Mi 11 Pro / Mi 11 Lite / Mi 11 Ultra
+"xiaomi mi 11": # Matches all Mi 11 variants
+  unlock_command: "fastboot flashing unlock"
+  lock_command: "fastboot flashing lock"
+  recovery_partition: "recovery"
+  boot_partition: "boot"
+  notes: "Config for Mi 11 series."
+
+# Mi 12 / Mi 12 Pro / Mi 12 Lite / Mi 12X / Mi 12 Ultra
+"xiaomi mi 12": # Matches all Mi 12 variants
+  unlock_command: "fastboot flashing unlock"
+  lock_command: "fastboot flashing lock"
+  recovery_partition: "recovery"
+  boot_partition: "boot"
+  notes: "Config for Mi 12 series."
+
+# Mi 13 / Mi 13 Pro / Mi 13 Lite / Mi 13 Ultra
+"xiaomi mi 13": # Matches all Mi 13 variants
+  unlock_command: "fastboot flashing unlock"
+  lock_command: "fastboot flashing lock"
+  recovery_partition: "recovery"
+  boot_partition: "boot"
+  notes: "Config for Mi 13 series."
+
+# Mi 14 / Mi 14 Pro / Mi 14 Ultra (Assuming similar commands)
+"xiaomi mi 14": # Matches all Mi 14 variants
+  unlock_command: "fastboot flashing unlock"
+  lock_command: "fastboot flashing lock"
+  recovery_partition: "recovery"
+  boot_partition: "boot"
+  notes: "Config for Mi 14 series (likely uses flashing unlock)."
+
+
+# --- Add other Mi sub-brands like Redmi, POCO if needed ---
+# Research specific popular models and add entries like:
+# "xiaomi redmi note 8 pro":
+#   unlock_command: "fastboot oem unlock" # Example, needs verification
+#   recovery_partition: "recovery" # Example, needs verification
+#   notes: "Config for Redmi Note 8 Pro (example, verify commands)."
+
+# "poco f1":
+#   unlock_command: "fastboot flashing unlock"
+#   recovery_partition: "recovery_a" # Example, often different partitions on Pocos
+#   boot_partition: "boot_a"
+#   notes: "Config for POCO F1 (example, verify partitions)."

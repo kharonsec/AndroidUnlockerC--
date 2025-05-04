@@ -186,5 +186,3 @@ Developed by [Your Name/Alias, e.g., Eliott] with assistance from Google Gemini.
 2.  **Create `LICENSE` file:** Create a file named `LICENSE` in your project directory and paste the text of the MIT License (or your chosen license) into it. You can easily find MIT license text templates online.
 3.  **Place in Repository:** If you're using a Git repository (like on GitHub, GitLab, etc.), place all the source files (`.cpp`, `.h`, `.pro`), the `devices.yaml`, and the `LICENSE` file in the root of the repository. The README.md will be automatically displayed on the repository page.
 4.  **Continue Developing:** Use the "Known Issues / TODO" list as a starting point for adding more features to your C++ application.
-
-This README should give anyone looking at your project a clear understanding of what it is and how to get started!

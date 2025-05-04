@@ -170,19 +170,3 @@ Cancellation of running commands is not implemented.
 File dialog default directories and filters are not yet configurable via devices.yaml.
 Manufacturer/Model detection might not work for all devices depending on available ADB/Fastboot properties.
 No dedicated installer or packaging is provided; requires manual compilation.
-Licensing
-This project is licensed under the MIT License. See the LICENSE file for details.
-(Note: Create a LICENSE file in your repository with the MIT license text)
-
-Credits
-Developed by [Your Name/Alias, e.g., Eliott] with assistance from Google Gemini.
-
-
----
-
-**Next Steps After Creating the README:**
-
-1.  **Create `devices.yaml`:** Create the actual `devices.yaml` file in your project directory with the example content (and modify it for your specific device if you know the commands).
-2.  **Create `LICENSE` file:** Create a file named `LICENSE` in your project directory and paste the text of the MIT License (or your chosen license) into it. You can easily find MIT license text templates online.
-3.  **Place in Repository:** If you're using a Git repository (like on GitHub, GitLab, etc.), place all the source files (`.cpp`, `.h`, `.pro`), the `devices.yaml`, and the `LICENSE` file in the root of the repository. The README.md will be automatically displayed on the repository page.
-4.  **Continue Developing:** Use the "Known Issues / TODO" list as a starting point for adding more features to your C++ application.

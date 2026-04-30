@@ -29,3 +29,7 @@ moc_*.o      # Compiled moc files
 *.dll        # Dynamic libraries (if your project built any)
 *.so         # Shared libraries (if your project built any)
 *.dylib      # macOS libraries
+
+# Added by cargo
+
+/target

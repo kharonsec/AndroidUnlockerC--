@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod advanced;
 mod app;
 mod config;
 mod executor;
@@ -207,6 +208,31 @@ impl eframe::App for AndroidUnlockerApp {
                         let args: Vec<String> = vec!["sideload".into(), path.to_string_lossy().into_owned()];
                         self.start_process("sideload", "adb".into(), args);
                     }
+                }
+                Action::StartLogcat => {
+                    let logcat_state = self.logcat_state.clone();
+                    let handle = self.rt.handle().clone();
+                    let tx = self.executor.new_tx();
+                    self.rt.spawn(async move {
+                        let mut ls = logcat_state.lock().await;
+                        ls.start(&handle, tx);
+                    });
+                }
+                Action::StopLogcat => {
+                    let logcat_state = self.logcat_state.clone();
+                    self.rt.spawn(async move {
+                        let mut ls = logcat_state.lock().await;
+                        ls.stop();
+                    });
+                }
+                Action::CaptureDmesg => {
+                    let dmesg_state = self.dmesg_state.clone();
+                    let handle = self.rt.handle().clone();
+                    let tx = self.executor.new_tx();
+                    self.rt.spawn(async move {
+                        let mut ds = dmesg_state.lock().await;
+                        ds.capture(&handle, tx);
+                    });
                 }
                 _ => {}
             }

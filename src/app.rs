@@ -1,3 +1,5 @@
+use crate::advanced::dmesg::DmesgState;
+use crate::advanced::logcat::LogcatState;
 use crate::config::FullConfig;
 use crate::executor::{Executor, ProcessOutput};
 use crate::state::AppState;
@@ -25,6 +27,9 @@ pub enum Action {
     RestoreBackup,
     FullNandBackup,
     ForensicDump,
+    StartLogcat,
+    StopLogcat,
+    CaptureDmesg,
     ToggleTab(usize),
 }
 
@@ -35,6 +40,8 @@ pub struct AndroidUnlockerApp {
     pub rt: tokio::runtime::Runtime,
     pub executor: Executor,
     last_checked_time: std::time::Instant,
+    pub logcat_state: Arc<Mutex<LogcatState>>,
+    pub dmesg_state: Arc<Mutex<DmesgState>>,
 }
 
 impl AndroidUnlockerApp {
@@ -51,6 +58,8 @@ impl AndroidUnlockerApp {
             rt,
             executor,
             last_checked_time: std::time::Instant::now(),
+            logcat_state: Arc::new(Mutex::new(LogcatState::default())),
+            dmesg_state: Arc::new(Mutex::new(DmesgState::default())),
         };
 
         app.check_system_info();

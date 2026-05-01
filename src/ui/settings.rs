@@ -1,5 +1,5 @@
 use super::{Action, AppState};
-use egui::RichText;
+use egui::{Color32, RichText};
 
 pub fn render(ui: &mut egui::Ui, _state: &AppState, _action: &mut Option<Action>, _disable: bool) {
     egui::ScrollArea::vertical().show(ui, |ui| {
@@ -8,8 +8,21 @@ pub fn render(ui: &mut egui::Ui, _state: &AppState, _action: &mut Option<Action>
                 ui.label(RichText::new("Preferences").strong());
             });
             ui.separator();
-            ui.label("Auto-detect interval: 3s (configurable in Phase 3)");
+            ui.label("Auto-detect interval: 3s");
             ui.label("Backup location: ~/.androidtool/backups");
+        });
+
+        ui.add_space(10.0);
+        ui.group(|ui| {
+            ui.vertical_centered(|ui| {
+                ui.label(RichText::new("Compliance").strong());
+            });
+            ui.separator();
+            let mut geo_locked = false;
+            ui.checkbox(
+                &mut geo_locked,
+                "Disable exploit features (compliance mode)",
+            );
         });
 
         ui.add_space(10.0);
@@ -52,11 +65,31 @@ pub fn render(ui: &mut egui::Ui, _state: &AppState, _action: &mut Option<Action>
         ui.add_space(10.0);
         ui.group(|ui| {
             ui.vertical_centered(|ui| {
+                ui.label(RichText::new("Audit").strong());
+            });
+            ui.separator();
+            ui.collapsing("Action Log Entries", |ui| {
+                let entries = crate::safety::audit::read_action_log();
+                for e in &entries {
+                    ui.label(format!("[{}] {} on {}", e.timestamp, e.action, e.serial));
+                }
+                if entries.is_empty() {
+                    ui.label("No actions logged yet.");
+                }
+            });
+            ui.collapsing("Consent History", |ui| {
+                ui.label("Consent records logged with each action.");
+            });
+        });
+
+        ui.add_space(10.0);
+        ui.group(|ui| {
+            ui.vertical_centered(|ui| {
                 ui.label(RichText::new("About").strong());
             });
             ui.separator();
             ui.label("Android Bootloader & Recovery Tool");
-            ui.label("Version: 0.3.0");
+            ui.label("Version: 0.4.0");
             ui.label("Author: Eliott");
             ui.label("License: GPLv3");
         });

@@ -10,6 +10,7 @@ pub fn render(
     let has_adb = state.device_mode == "adb"
         || state.device_mode == "recovery"
         || state.device_mode == "sideload";
+    let has_fastboot = state.device_mode == "fastboot";
 
     egui::ScrollArea::vertical().show(ui, |ui| {
         ui.group(|ui| {
@@ -24,6 +25,9 @@ pub fn render(
                 if ui.button("Full NAND Backup").clicked() {
                     *action = Some(Action::FullNandBackup);
                 }
+            });
+            ui.horizontal(|ui| {
+                ui.checkbox(&mut false, "Encrypt backup with AES-256");
             });
         });
 
@@ -53,13 +57,24 @@ pub fn render(
             });
         });
 
-        ui.add_space(20.0);
-        ui.label(
-            RichText::new("Phase 3 Preview")
-                .strong()
-                .color(Color32::GRAY),
-        );
-        ui.label("  Post-quantum encrypted cloud backup (Kyber)");
-        ui.label("  Secure wipe (DoD 5220.22-M)");
+        ui.add_space(10.0);
+        ui.group(|ui| {
+            ui.vertical_centered(|ui| {
+                ui.label(
+                    RichText::new("Device Wipe")
+                        .color(Color32::from_rgb(200, 50, 50))
+                        .strong(),
+                );
+            });
+            ui.separator();
+            ui.add_enabled_ui((has_fastboot || has_adb) && !disable_actions, |ui| {
+                if ui.button("Quick Wipe (userdata + cache)").clicked() {
+                    *action = Some(Action::QuickWipe);
+                }
+                if ui.button("Secure Wipe (DoD 5220.22-M)").clicked() {
+                    *action = Some(Action::SecureWipe);
+                }
+            });
+        });
     });
 }

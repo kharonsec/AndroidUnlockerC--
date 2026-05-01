@@ -236,6 +236,16 @@ impl eframe::App for AndroidUnlockerApp {
                         ds.capture(&handle, tx);
                     });
                 }
+                Action::QuickWipe => {
+                    let serial = { self.state.try_lock().unwrap().device_serial.clone() };
+                    crate::safety::audit::log_action("quick_wipe", &serial);
+                    self.start_process("quick_wipe", "fastboot".into(), vec!["erase".into(), "userdata".into()]);
+                }
+                Action::SecureWipe => {
+                    let serial = { self.state.try_lock().unwrap().device_serial.clone() };
+                    crate::safety::audit::log_action("secure_wipe", &serial);
+                    self.start_process("secure_wipe", "adb".into(), vec!["shell".into(), "dd".into(), "if=/dev/urandom".into(), "of=/dev/block/by-name/userdata".into(), "bs=1M".into()]);
+                }
                 _ => {}
             }
         }

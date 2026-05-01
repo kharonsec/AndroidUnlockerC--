@@ -27,6 +27,8 @@ pub enum Action {
     RestoreBackup,
     FullNandBackup,
     ForensicDump,
+    QuickWipe,
+    SecureWipe,
     StartLogcat,
     StopLogcat,
     CaptureDmesg,

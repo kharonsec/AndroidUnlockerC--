@@ -35,15 +35,27 @@ pub fn render(ui: &mut egui::Ui, state: &AppState, action: &mut Option<Action>, 
         });
     });
 
-    ui.add_space(20.0);
-    ui.label(
-        RichText::new("Phase 3 Preview")
-            .strong()
-            .color(Color32::GRAY),
-    );
-    ui.label("  USB traffic sniffer");
-    ui.label("  Partition hex editor");
-    ui.label("  Boot image patcher (Magisk/Kitsune auto-patch)");
-    ui.label("  DTBO overlays editor");
-    ui.label("  SELinux policy explorer");
+    ui.add_space(10.0);
+    ui.collapsing("Boot Image Analyzer", |ui| {
+        if ui.button("Pick boot.img").clicked() {}
+        ui.label("Select a boot image file, then click Analyze.");
+        if ui.button("Analyze").clicked() {}
+        if ui.button("Patch with Magisk").clicked() {}
+    });
+
+    ui.add_space(10.0);
+    ui.collapsing("DTBO Info Viewer", |ui| {
+        if ui.button("Pick .dtbo file").clicked() {}
+        if ui.button("View Info").clicked() {}
+    });
+
+    ui.add_space(10.0);
+    ui.collapsing("Partition Hex Viewer", |ui| {
+        ui.horizontal(|ui| {
+            ui.label("Path:");
+            let mut path = String::from("/dev/block/by-name/boot");
+            ui.add_sized([250.0, 20.0], egui::TextEdit::singleline(&mut path));
+            if ui.button("Read").clicked() {}
+        });
+    });
 }

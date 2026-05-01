@@ -47,6 +47,31 @@ pub fn render(
         });
     }
 
+    if state.device_manufacturer != "Unknown" {
+        ui.add_space(10.0);
+        let mfg = state.device_manufacturer.to_lowercase();
+        let content = std::fs::read_to_string("warranty_warnings.yaml").unwrap_or_default();
+        if let Ok(configs) =
+            serde_yaml::from_str::<std::collections::HashMap<String, serde_yaml::Value>>(&content)
+        {
+            for (key, val) in &configs {
+                if mfg.contains(&key.to_lowercase()) {
+                    if let Some(warning) = val.get("warning").and_then(|v| v.as_str()) {
+                        ui.group(|ui| {
+                            ui.label(
+                                RichText::new("Warranty Warning")
+                                    .color(Color32::from_rgb(200, 100, 0))
+                                    .strong(),
+                            );
+                            ui.label(warning);
+                        });
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
     ui.add_space(20.0);
     ui.label(
         RichText::new("Phase 2 Preview")

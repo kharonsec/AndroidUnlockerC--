@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Deserialize, Clone)]
@@ -81,4 +81,29 @@ impl FullConfig {
 
         self.default.clone().unwrap_or_default()
     }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct FlashProfile {
+    pub name: String,
+    pub device: Option<String>,
+    pub operations: Vec<ProfileOp>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ProfileOp {
+    #[serde(rename = "type")]
+    pub op_type: String,
+    pub target: String,
+    pub file: Option<String>,
+}
+
+pub fn save_profile(profile: &FlashProfile, path: &str) -> Result<(), String> {
+    let yaml = serde_yaml::to_string(profile).map_err(|e| format!("Serialize: {}", e))?;
+    std::fs::write(path, yaml).map_err(|e| format!("Write: {}", e))
+}
+
+pub fn load_profile(path: &str) -> Result<FlashProfile, String> {
+    let content = std::fs::read_to_string(path).map_err(|e| format!("Read: {}", e))?;
+    serde_yaml::from_str(&content).map_err(|e| format!("Parse: {}", e))
 }

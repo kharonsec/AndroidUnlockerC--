@@ -166,6 +166,7 @@ dependencies = [
  "crossbeam-channel",
  "eframe",
  "egui",
+ "futures-util",
  "reqwest",
  "rfd",
  "serde",

@@ -1,9 +1,17 @@
 use reqwest::Client;
 use std::path::PathBuf;
 
-pub async fn download_file(url: &str, dest: PathBuf, on_progress: impl Fn(u64, u64)) -> Result<PathBuf, String> {
+pub async fn download_file(
+    url: &str,
+    dest: PathBuf,
+    on_progress: impl Fn(u64, u64),
+) -> Result<PathBuf, String> {
     let client = Client::new();
-    let response = client.get(url).send().await.map_err(|e| format!("Request: {}", e))?;
+    let response = client
+        .get(url)
+        .send()
+        .await
+        .map_err(|e| format!("Request: {}", e))?;
     let total = response.content_length().unwrap_or(0);
 
     let mut downloaded = 0u64;
@@ -23,5 +31,8 @@ pub async fn download_file(url: &str, dest: PathBuf, on_progress: impl Fn(u64, u
 }
 
 pub fn twrp_download_url(device_codename: &str) -> String {
-    format!("https://dl.twrp.me/{}/twrp-{}-latest.img", device_codename, device_codename)
+    format!(
+        "https://dl.twrp.me/{}/twrp-{}-latest.img",
+        device_codename, device_codename
+    )
 }

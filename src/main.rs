@@ -28,7 +28,10 @@ impl eframe::App for AndroKitApp {
             let mut st = self.state.try_lock().unwrap();
             match event {
                 ProcessOutput::Stdout(line) => {
-                    st.logs.push((format!("[STDOUT] {}", line), Color32::from_rgb(100, 100, 100)));
+                    st.logs.push((
+                        format!("[STDOUT] {}", line),
+                        Color32::from_rgb(100, 100, 100),
+                    ));
                     if st.current_command_id == "detect_adb_props" {
                         if line.contains("ro.product.manufacturer") {
                             if let Some(val) = line.split("]: [").nth(1) {
@@ -50,7 +53,8 @@ impl eframe::App for AndroKitApp {
                             }
                         }
                     }
-                    st.logs.push((format!("[STDERR] {}", line), Color32::from_rgb(200, 50, 50)));
+                    st.logs
+                        .push((format!("[STDERR] {}", line), Color32::from_rgb(200, 50, 50)));
                 }
                 ProcessOutput::Error(e) => {
                     st.logs.push((format!("[ERROR] {}", e), Color32::RED));
@@ -61,10 +65,14 @@ impl eframe::App for AndroKitApp {
                     st.current_command_id.clear();
                     st.cancel_tx = None;
                     if success {
-                        st.logs.push(("[SUCCESS] Command completed successfully.".into(), Color32::from_rgb(50, 150, 50)));
+                        st.logs.push((
+                            "[SUCCESS] Command completed successfully.".into(),
+                            Color32::from_rgb(50, 150, 50),
+                        ));
                         st.status_bar = format!("Command '{}' successful.", id);
                     } else {
-                        st.logs.push(("[ERROR] Command failed.".into(), Color32::DARK_RED));
+                        st.logs
+                            .push(("[ERROR] Command failed.".into(), Color32::DARK_RED));
                         st.status_bar = format!("Command '{}' failed.", id);
                     }
                 }
@@ -75,7 +83,11 @@ impl eframe::App for AndroKitApp {
 
         {
             let mut st = self.state.try_lock().unwrap();
-            if st.is_amd && !st.has_quirk && st.device_manufacturer.to_lowercase().contains("xiaomi") && !st.quirk_prompt_dismissed {
+            if st.is_amd
+                && !st.has_quirk
+                && st.device_manufacturer.to_lowercase().contains("xiaomi")
+                && !st.quirk_prompt_dismissed
+            {
                 st.show_quirk_prompt = true;
             }
 
@@ -96,7 +108,12 @@ impl eframe::App for AndroKitApp {
                             "none" => Color32::GRAY,
                             _ => Color32::from_rgb(0, 100, 200),
                         };
-                        ui.label(RichText::new(mode.to_uppercase()).strong().size(24.0).color(mode_color));
+                        ui.label(
+                            RichText::new(mode.to_uppercase())
+                                .strong()
+                                .size(24.0)
+                                .color(mode_color),
+                        );
                         ui.label("MODE:");
                     });
                 });
@@ -118,15 +135,20 @@ impl eframe::App for AndroKitApp {
                 });
             });
 
-            egui::TopBottomPanel::top("tabs").resizable(false).show(ctx, |ui| {
-                ui.horizontal(|ui| {
-                    for (i, tab) in ui::TABS.iter().enumerate() {
-                        if ui.selectable_label(st.selected_tab == i, tab.name).clicked() {
-                            st.selected_tab = i;
+            egui::TopBottomPanel::top("tabs")
+                .resizable(false)
+                .show(ctx, |ui| {
+                    ui.horizontal(|ui| {
+                        for (i, tab) in ui::TABS.iter().enumerate() {
+                            if ui
+                                .selectable_label(st.selected_tab == i, tab.name)
+                                .clicked()
+                            {
+                                st.selected_tab = i;
+                            }
                         }
-                    }
+                    });
                 });
-            });
 
             egui::CentralPanel::default().show(ctx, |ui| {
                 ui::render_tab_content(ui, st.selected_tab, &st, &mut action, is_running);
@@ -153,13 +175,16 @@ impl eframe::App for AndroKitApp {
         }
 
         if let Some(ref a) = action {
-            if *a == Action::None { action = None; }
+            if *a == Action::None {
+                action = None;
+            }
         }
 
         if let Some(a) = action {
             let config = {
                 let st = self.state.try_lock().unwrap();
-                self.config.get_config(&st.device_manufacturer, &st.device_model)
+                self.config
+                    .get_config(&st.device_manufacturer, &st.device_model)
             };
             let mode = { self.state.try_lock().unwrap().device_mode.clone() };
             match a {
@@ -176,38 +201,59 @@ impl eframe::App for AndroKitApp {
                     }
                 }
                 Action::FlashRecovery => {
-                    if let Some(path) = FileDialog::new().add_filter("image", &["img"]).pick_file() {
-                        let partition = config.recovery_partition.unwrap_or_else(|| "recovery".into());
-                        let args: Vec<String> = vec!["flash".into(), partition, path.to_string_lossy().into_owned()];
+                    if let Some(path) = FileDialog::new().add_filter("image", &["img"]).pick_file()
+                    {
+                        let partition = config
+                            .recovery_partition
+                            .unwrap_or_else(|| "recovery".into());
+                        let args: Vec<String> = vec![
+                            "flash".into(),
+                            partition,
+                            path.to_string_lossy().into_owned(),
+                        ];
                         self.start_process("flash_recovery", "fastboot".into(), args);
                     }
                 }
                 Action::FlashBoot => {
-                    if let Some(path) = FileDialog::new().add_filter("image", &["img"]).pick_file() {
+                    if let Some(path) = FileDialog::new().add_filter("image", &["img"]).pick_file()
+                    {
                         let partition = config.boot_partition.unwrap_or_else(|| "boot".into());
-                        let args: Vec<String> = vec!["flash".into(), partition, path.to_string_lossy().into_owned()];
+                        let args: Vec<String> = vec![
+                            "flash".into(),
+                            partition,
+                            path.to_string_lossy().into_owned(),
+                        ];
                         self.start_process("flash_boot", "fastboot".into(), args);
                     }
                 }
                 Action::RebootSystem => {
                     let cmd = if mode == "fastboot" {
-                        config.fastboot_reboot_command.unwrap_or_else(|| "fastboot reboot".into())
+                        config
+                            .fastboot_reboot_command
+                            .unwrap_or_else(|| "fastboot reboot".into())
                     } else {
-                        config.adb_reboot_system_command.unwrap_or_else(|| "adb reboot".into())
+                        config
+                            .adb_reboot_system_command
+                            .unwrap_or_else(|| "adb reboot".into())
                     };
                     self.run_cmd("reboot_system", &cmd, None);
                 }
                 Action::RebootRecovery => {
-                    let cmd = config.adb_reboot_recovery_command.unwrap_or_else(|| "adb reboot recovery".into());
+                    let cmd = config
+                        .adb_reboot_recovery_command
+                        .unwrap_or_else(|| "adb reboot recovery".into());
                     self.run_cmd("reboot_recovery", &cmd, None);
                 }
                 Action::RebootBootloader => {
-                    let cmd = config.adb_reboot_bootloader_command.unwrap_or_else(|| "adb reboot bootloader".into());
+                    let cmd = config
+                        .adb_reboot_bootloader_command
+                        .unwrap_or_else(|| "adb reboot bootloader".into());
                     self.run_cmd("reboot_bootloader", &cmd, None);
                 }
                 Action::Sideload => {
                     if let Some(path) = FileDialog::new().add_filter("zip", &["zip"]).pick_file() {
-                        let args: Vec<String> = vec!["sideload".into(), path.to_string_lossy().into_owned()];
+                        let args: Vec<String> =
+                            vec!["sideload".into(), path.to_string_lossy().into_owned()];
                         self.start_process("sideload", "adb".into(), args);
                     }
                 }
@@ -239,12 +285,26 @@ impl eframe::App for AndroKitApp {
                 Action::QuickWipe => {
                     let serial = { self.state.try_lock().unwrap().device_serial.clone() };
                     crate::safety::audit::log_action("quick_wipe", &serial);
-                    self.start_process("quick_wipe", "fastboot".into(), vec!["erase".into(), "userdata".into()]);
+                    self.start_process(
+                        "quick_wipe",
+                        "fastboot".into(),
+                        vec!["erase".into(), "userdata".into()],
+                    );
                 }
                 Action::SecureWipe => {
                     let serial = { self.state.try_lock().unwrap().device_serial.clone() };
                     crate::safety::audit::log_action("secure_wipe", &serial);
-                    self.start_process("secure_wipe", "adb".into(), vec!["shell".into(), "dd".into(), "if=/dev/urandom".into(), "of=/dev/block/by-name/userdata".into(), "bs=1M".into()]);
+                    self.start_process(
+                        "secure_wipe",
+                        "adb".into(),
+                        vec![
+                            "shell".into(),
+                            "dd".into(),
+                            "if=/dev/urandom".into(),
+                            "of=/dev/block/by-name/userdata".into(),
+                            "bs=1M".into(),
+                        ],
+                    );
                 }
                 _ => {}
             }
@@ -259,5 +319,9 @@ fn main() -> eframe::Result<()> {
             .with_title("AndroKit"),
         ..Default::default()
     };
-    eframe::run_native("AndroKit", options, Box::new(|cc| Box::new(AndroKitApp::new(cc))))
+    eframe::run_native(
+        "AndroKit",
+        options,
+        Box::new(|cc| Box::new(AndroKitApp::new(cc))),
+    )
 }

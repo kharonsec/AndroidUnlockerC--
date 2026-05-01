@@ -1,9 +1,8 @@
 pub mod adb_fastboot;
-pub mod edl;
 pub mod brom;
-pub mod samsung;
+pub mod edl;
 pub mod mtp;
-
+pub mod samsung;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ProtocolId {
@@ -43,19 +42,30 @@ pub struct ProtocolEngine;
 
 impl ProtocolEngine {
     fn parse_adb_devices(stdout: &str) -> Vec<(String, String)> {
-        stdout.lines().skip(1)
+        stdout
+            .lines()
+            .skip(1)
             .filter_map(|l| {
                 let p: Vec<&str> = l.split_whitespace().collect();
-                if p.len() == 2 { Some((p[0].into(), p[1].into())) } else { None }
+                if p.len() == 2 {
+                    Some((p[0].into(), p[1].into()))
+                } else {
+                    None
+                }
             })
             .collect()
     }
 
     fn parse_fastboot_devices(stdout: &str) -> Vec<(String, String)> {
-        stdout.lines()
+        stdout
+            .lines()
             .filter_map(|l| {
                 let p: Vec<&str> = l.split_whitespace().collect();
-                if p.len() >= 2 { Some((p[0].into(), p[1].into())) } else { None }
+                if p.len() >= 2 {
+                    Some((p[0].into(), p[1].into()))
+                } else {
+                    None
+                }
             })
             .collect()
     }
@@ -64,13 +74,27 @@ impl ProtocolEngine {
         let mut mode = "none".to_string();
         let mut serial = "N/A".to_string();
 
-        if let Ok((ok, stdout, _)) = crate::executor::Executor::run_command_sync("adb", &["devices"]).await {
+        if let Ok((ok, stdout, _)) =
+            crate::executor::Executor::run_command_sync("adb", &["devices"]).await
+        {
             if ok {
                 for (s, status) in Self::parse_adb_devices(&stdout) {
                     match status.as_str() {
-                        "device" => { mode = "adb".into(); serial = s; break; }
-                        "recovery" => { mode = "recovery".into(); serial = s; break; }
-                        "sideload" => { mode = "sideload".into(); serial = s; break; }
+                        "device" => {
+                            mode = "adb".into();
+                            serial = s;
+                            break;
+                        }
+                        "recovery" => {
+                            mode = "recovery".into();
+                            serial = s;
+                            break;
+                        }
+                        "sideload" => {
+                            mode = "sideload".into();
+                            serial = s;
+                            break;
+                        }
                         _ => {}
                     }
                 }
@@ -78,7 +102,9 @@ impl ProtocolEngine {
         }
 
         if mode == "none" {
-            if let Ok((ok, stdout, _)) = crate::executor::Executor::run_command_sync("fastboot", &["devices"]).await {
+            if let Ok((ok, stdout, _)) =
+                crate::executor::Executor::run_command_sync("fastboot", &["devices"]).await
+            {
                 if ok {
                     for (s, status) in Self::parse_fastboot_devices(&stdout) {
                         if status == "fastboot" {

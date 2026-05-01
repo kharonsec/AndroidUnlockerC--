@@ -5,7 +5,11 @@ pub async fn connect(ip: &str, port: u16) -> Result<String, String> {
     let (ok, stdout, stderr) = Executor::run_command_sync("adb", &["connect", &addr])
         .await
         .map_err(|e| format!("Error: {}", e))?;
-    if ok { Ok(stdout) } else { Err(stderr) }
+    if ok {
+        Ok(stdout)
+    } else {
+        Err(stderr)
+    }
 }
 
 pub async fn disconnect(ip: &str, port: u16) -> Result<String, String> {
@@ -13,7 +17,11 @@ pub async fn disconnect(ip: &str, port: u16) -> Result<String, String> {
     let (ok, stdout, stderr) = Executor::run_command_sync("adb", &["disconnect", &addr])
         .await
         .map_err(|e| format!("Error: {}", e))?;
-    if ok { Ok(stdout) } else { Err(stderr) }
+    if ok {
+        Ok(stdout)
+    } else {
+        Err(stderr)
+    }
 }
 
 pub fn generate_dockerfile() -> &'static str {

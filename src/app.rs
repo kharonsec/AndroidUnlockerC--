@@ -86,7 +86,9 @@ impl AndroKitApp {
     pub fn apply_quirk(&self) {
         let tx = self.executor.new_tx();
         self.rt.spawn(async move {
-            let _ = tx.send(ProcessOutput::Stdout("Applying temporary USB quirk...".into()));
+            let _ = tx.send(ProcessOutput::Stdout(
+                "Applying temporary USB quirk...".into(),
+            ));
             let output = std::process::Command::new("sh")
                 .arg("-c")
                 .arg("echo '18d1:d00d:k' | sudo tee /sys/module/usbcore/parameters/quirks")
@@ -96,7 +98,9 @@ impl AndroKitApp {
                     let _ = tx.send(ProcessOutput::Stdout("Quirk applied successfully!".into()));
                 }
                 _ => {
-                    let _ = tx.send(ProcessOutput::Error("Failed to apply quirk. Root permissions may be required.".into()));
+                    let _ = tx.send(ProcessOutput::Error(
+                        "Failed to apply quirk. Root permissions may be required.".into(),
+                    ));
                 }
             }
         });
@@ -123,47 +127,78 @@ impl AndroKitApp {
             self.append_log(&format!("[WARNING] {}", msg), Color32::YELLOW);
         }
         let parts: Vec<&str> = command_str.split_whitespace().collect();
-        if parts.is_empty() { return; }
-        self.start_process(id, parts[0].into(), parts[1..].iter().map(|s| s.to_string()).collect());
+        if parts.is_empty() {
+            return;
+        }
+        self.start_process(
+            id,
+            parts[0].into(),
+            parts[1..].iter().map(|s| s.to_string()).collect(),
+        );
     }
 
     pub fn start_process(&self, id: &str, program: String, args: Vec<String>) {
         if let Ok(mut state) = self.state.try_lock() {
             if state.is_command_running {
-                state.logs.push(("[WARNING] A command is already running.".into(), Color32::YELLOW));
+                state.logs.push((
+                    "[WARNING] A command is already running.".into(),
+                    Color32::YELLOW,
+                ));
                 return;
             }
             state.is_command_running = true;
             state.current_command_id = id.to_string();
             let (cancel_tx, cancel_rx) = tokio::sync::mpsc::channel(1);
             state.cancel_tx = Some(cancel_tx);
-            self.append_log(&format!("[*] Starting: {} {:?}", program, args), Color32::LIGHT_BLUE);
-            self.executor.run_command(id.to_string(), program, args, cancel_rx);
+            self.append_log(
+                &format!("[*] Starting: {} {:?}", program, args),
+                Color32::LIGHT_BLUE,
+            );
+            self.executor
+                .run_command(id.to_string(), program, args, cancel_rx);
         }
     }
 
     pub fn check_device_state(&mut self) {
-        if self.last_checked_time.elapsed().as_secs() < 3 { return; }
+        if self.last_checked_time.elapsed().as_secs() < 3 {
+            return;
+        }
         self.last_checked_time = std::time::Instant::now();
         {
             if let Ok(state) = self.state.try_lock() {
-                if state.is_command_running { return; }
+                if state.is_command_running {
+                    return;
+                }
             }
         }
         let state_clone = self.state.clone();
         self.rt.spawn(async move {
             let mut detected_mode = "none".to_string();
             let mut detected_serial = "N/A".to_string();
-            if let Ok((success, stdout, _)) = crate::executor::Executor::run_command_sync("adb", &["devices"]).await {
+            if let Ok((success, stdout, _)) =
+                crate::executor::Executor::run_command_sync("adb", &["devices"]).await
+            {
                 if success {
                     for line in stdout.lines().skip(1) {
                         let parts: Vec<&str> = line.split_whitespace().collect();
                         if parts.len() == 2 {
                             let status = parts[1];
                             match status {
-                                "device" => { detected_mode = "adb".into(); detected_serial = parts[0].into(); break; }
-                                "recovery" => { detected_mode = "recovery".into(); detected_serial = parts[0].into(); break; }
-                                "sideload" => { detected_mode = "sideload".into(); detected_serial = parts[0].into(); break; }
+                                "device" => {
+                                    detected_mode = "adb".into();
+                                    detected_serial = parts[0].into();
+                                    break;
+                                }
+                                "recovery" => {
+                                    detected_mode = "recovery".into();
+                                    detected_serial = parts[0].into();
+                                    break;
+                                }
+                                "sideload" => {
+                                    detected_mode = "sideload".into();
+                                    detected_serial = parts[0].into();
+                                    break;
+                                }
                                 _ => {}
                             }
                         }
@@ -171,7 +206,9 @@ impl AndroKitApp {
                 }
             }
             if detected_mode == "none" {
-                if let Ok((success, stdout, _)) = crate::executor::Executor::run_command_sync("fastboot", &["devices"]).await {
+                if let Ok((success, stdout, _)) =
+                    crate::executor::Executor::run_command_sync("fastboot", &["devices"]).await
+                {
                     if success {
                         for line in stdout.lines() {
                             let parts: Vec<&str> = line.split_whitespace().collect();
@@ -198,10 +235,18 @@ impl AndroKitApp {
         let mode = { self.state.try_lock().unwrap().device_mode.clone() };
         if mode == "adb" || mode == "recovery" || mode == "sideload" {
             self.set_status("Getting ADB properties...");
-            self.start_process("detect_adb_props", "adb".into(), vec!["shell".into(), "getprop".into()]);
+            self.start_process(
+                "detect_adb_props",
+                "adb".into(),
+                vec!["shell".into(), "getprop".into()],
+            );
         } else if mode == "fastboot" {
             self.set_status("Getting Fastboot variables...");
-            self.start_process("detect_fastboot_vars", "fastboot".into(), vec!["getvar".into(), "all".into()]);
+            self.start_process(
+                "detect_fastboot_vars",
+                "fastboot".into(),
+                vec!["getvar".into(), "all".into()],
+            );
         }
     }
 }

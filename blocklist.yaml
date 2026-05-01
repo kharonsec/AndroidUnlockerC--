@@ -1,0 +1,9 @@
+malware:
+  - pattern: "*spynote*"
+    warning: "SpyNote RAT detected. This is surveillance malware."
+  - pattern: "*ahmyth*"
+    warning: "AhMyth RAT detected. This is remote access malware."
+  - pattern: "*dendroid*"
+    warning: "Dendroid RAT detected. This is banking malware."
+  - pattern: "*omnirat*"
+    warning: "OmniRAT detected. This is remote access malware."

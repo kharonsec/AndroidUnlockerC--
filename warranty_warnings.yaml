@@ -1,0 +1,12 @@
+samsung:
+  warning: "Unlocking will trip Knox. Samsung Pay, Secure Folder, and warranty may be permanently lost."
+xiaomi:
+  warning: "Xiaomi requires Mi Unlock tool approval. Unauthorized unlock may void warranty. Wait times apply."
+huawei:
+  warning: "Huawei no longer provides official bootloader unlock codes. Unlocking via exploits may brick the device."
+oppo:
+  warning: "Oppo/Realme bootloader unlocking is heavily restricted. Deep testing app required. May void warranty."
+oneplus:
+  warning: "OnePlus bootloader unlocking does not void warranty but may affect Widevine L1 DRM."
+pixel:
+  warning: "Unlocking Google Pixel bootloader may affect SafetyNet/Play Integrity and some banking apps."

@@ -1,4 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![allow(dead_code)]
 
 mod advanced;
 mod analyzer;
@@ -46,11 +47,11 @@ impl eframe::App for AndroKitApp {
                     }
                 }
                 ProcessOutput::Stderr(line) => {
-                    if st.current_command_id == "detect_fastboot_vars" {
-                        if line.starts_with("(bootloader) product:") {
-                            if let Some(val) = line.split(':').nth(1) {
-                                st.device_model = format!("{} (codename)", val.trim());
-                            }
+                    if st.current_command_id == "detect_fastboot_vars"
+                        && line.starts_with("(bootloader) product:")
+                    {
+                        if let Some(val) = line.split(':').nth(1) {
+                            st.device_model = format!("{} (codename)", val.trim());
                         }
                     }
                     st.logs

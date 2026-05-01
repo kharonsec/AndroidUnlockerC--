@@ -52,7 +52,7 @@ fn render_profiles(ui: &mut egui::Ui, _action: &mut Option<Action>) {
     if let Ok(entries) = std::fs::read_dir(&profiles_dir) {
         for entry in entries.flatten() {
             let path = entry.path();
-            if path.extension().map_or(false, |e| e == "yaml") {
+            if path.extension().is_some_and(|e| e == "yaml") {
                 let name = path
                     .file_stem()
                     .unwrap_or_default()
@@ -73,8 +73,8 @@ fn render_profiles(ui: &mut egui::Ui, _action: &mut Option<Action>) {
     }
 
     ui.add_space(8.0);
-    if ui.button("Save Current Config").clicked() {}
-    if ui.button("Export Profile").clicked() {}
+    ui.button("Save Current Config").clicked();
+    ui.button("Export Profile").clicked();
     if ui.button("Import Profile").clicked() {}
 }
 

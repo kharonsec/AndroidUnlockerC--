@@ -1,5 +1,5 @@
 use super::{Action, AppState};
-use egui::{Color32, RichText};
+use egui::RichText;
 
 pub fn render(ui: &mut egui::Ui, state: &AppState, action: &mut Option<Action>, _disable: bool) {
     let has_adb = state.device_mode == "adb" || state.device_mode == "recovery";
@@ -37,15 +37,15 @@ pub fn render(ui: &mut egui::Ui, state: &AppState, action: &mut Option<Action>, 
 
     ui.add_space(10.0);
     ui.collapsing("Boot Image Analyzer", |ui| {
-        if ui.button("Pick boot.img").clicked() {}
+        ui.button("Pick boot.img").clicked();
         ui.label("Select a boot image file, then click Analyze.");
-        if ui.button("Analyze").clicked() {}
+        ui.button("Analyze").clicked();
         if ui.button("Patch with Magisk").clicked() {}
     });
 
     ui.add_space(10.0);
     ui.collapsing("DTBO Info Viewer", |ui| {
-        if ui.button("Pick .dtbo file").clicked() {}
+        ui.button("Pick .dtbo file").clicked();
         if ui.button("View Info").clicked() {}
     });
 

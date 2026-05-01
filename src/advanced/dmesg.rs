@@ -1,14 +1,9 @@
 use crate::executor::ProcessOutput;
 use crossbeam_channel::Sender;
 
+#[derive(Default)]
 pub struct DmesgState {
     pub capturing: bool,
-}
-
-impl Default for DmesgState {
-    fn default() -> Self {
-        Self { capturing: false }
-    }
 }
 
 impl DmesgState {

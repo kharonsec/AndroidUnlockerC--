@@ -1,5 +1,5 @@
 use super::{Action, AppState};
-use egui::{Color32, RichText};
+use egui::RichText;
 
 pub fn render(ui: &mut egui::Ui, _state: &AppState, _action: &mut Option<Action>, _disable: bool) {
     egui::ScrollArea::vertical().show(ui, |ui| {
@@ -40,7 +40,7 @@ pub fn render(ui: &mut egui::Ui, _state: &AppState, _action: &mut Option<Action>
                 ui.add_sized([60.0, 20.0], egui::TextEdit::singleline(&mut port));
             });
             ui.horizontal(|ui| {
-                if ui.button("Connect").clicked() {}
+                ui.button("Connect").clicked();
                 if ui.button("Disconnect").clicked() {}
             });
             ui.label("Status: Not connected");

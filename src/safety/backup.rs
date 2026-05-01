@@ -27,8 +27,7 @@ pub async fn backup_partitions(serial: &str, partitions: &[&str]) -> Result<Path
                 &format!("of=/sdcard/{}.img", part),
             ],
         )
-        .await
-        .map_err(|e| e)?;
+        .await?;
         if !ok {
             return Err(format!("dd failed for {}: {}", part, stderr));
         }
@@ -40,8 +39,7 @@ pub async fn backup_partitions(serial: &str, partitions: &[&str]) -> Result<Path
                 &dir.join(format!("{}.img", part)).to_string_lossy(),
             ],
         )
-        .await
-        .map_err(|e| e)?;
+        .await?;
         if !ok {
             return Err(format!("pull failed for {}: {}", part, stderr));
         }

@@ -8,18 +8,45 @@ pub fn render(ui: &mut egui::Ui, _state: &AppState, _action: &mut Option<Action>
                 ui.label(RichText::new("Preferences").strong());
             });
             ui.separator();
-            ui.label("Auto-detect interval: 3s (configurable in Phase 2)");
+            ui.label("Auto-detect interval: 3s (configurable in Phase 3)");
             ui.label("Backup location: ~/.androidtool/backups");
         });
 
         ui.add_space(10.0);
         ui.group(|ui| {
             ui.vertical_centered(|ui| {
-                ui.label(RichText::new("Network").strong());
+                ui.label(RichText::new("Wi-Fi ADB").strong());
             });
             ui.separator();
-            ui.label("Wi-Fi ADB: Phase 2");
-            ui.label("Docker mode: Phase 2");
+            ui.horizontal(|ui| {
+                ui.label("IP:");
+                let mut ip = String::from("192.168.1.");
+                ui.text_edit_singleline(&mut ip);
+                ui.label("Port:");
+                let mut port = String::from("5555");
+                ui.add_sized([60.0, 20.0], egui::TextEdit::singleline(&mut port));
+            });
+            ui.horizontal(|ui| {
+                if ui.button("Connect").clicked() {}
+                if ui.button("Disconnect").clicked() {}
+            });
+            ui.label("Status: Not connected");
+        });
+
+        ui.add_space(10.0);
+        ui.group(|ui| {
+            ui.vertical_centered(|ui| {
+                ui.label(RichText::new("Docker").strong());
+            });
+            ui.separator();
+            if ui.button("Generate Dockerfile").clicked() {
+                let content = crate::network::wifi_adb::generate_dockerfile();
+                std::fs::write("Dockerfile", content).ok();
+            }
+            if ui.button("Generate docker-compose.yml").clicked() {
+                let content = crate::network::docker::generate_compose();
+                std::fs::write("docker-compose.yml", content).ok();
+            }
         });
 
         ui.add_space(10.0);
@@ -29,7 +56,7 @@ pub fn render(ui: &mut egui::Ui, _state: &AppState, _action: &mut Option<Action>
             });
             ui.separator();
             ui.label("Android Bootloader & Recovery Tool");
-            ui.label("Version: 0.2.0");
+            ui.label("Version: 0.3.0");
             ui.label("Author: Eliott");
             ui.label("License: GPLv3");
         });

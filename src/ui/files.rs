@@ -1,5 +1,5 @@
 use super::{Action, AppState};
-use egui::{Color32, RichText};
+use egui::RichText;
 
 pub fn render(
     ui: &mut egui::Ui,
@@ -14,7 +14,7 @@ pub fn render(
     egui::ScrollArea::vertical().show(ui, |ui| {
         ui.group(|ui| {
             ui.vertical_centered(|ui| {
-                ui.label(RichText::new("File Transfer").strong());
+                ui.label(RichText::new("ADB File Transfer").strong());
             });
             ui.separator();
             ui.add_enabled_ui(has_adb && !disable_actions, |ui| {
@@ -27,13 +27,14 @@ pub fn render(
             });
         });
 
-        ui.add_space(20.0);
-        ui.label(
-            RichText::new("Phase 2 Preview")
-                .strong()
-                .color(Color32::GRAY),
-        );
-        ui.label("  MTP browser (directory tree, upload/download)");
-        ui.label("  Transfer history with status");
+        ui.add_space(10.0);
+        ui.group(|ui| {
+            ui.vertical_centered(|ui| {
+                ui.label(RichText::new("MTP Browser").strong());
+            });
+            ui.separator();
+            ui.label("Waiting for MTP device connection...");
+            ui.label("(Connect a device in MTP/file transfer mode)");
+        });
     });
 }

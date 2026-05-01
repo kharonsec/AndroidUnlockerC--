@@ -195,7 +195,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "android_unlocker"
+name = "androkit"
 version = "0.1.0"
 dependencies = [
  "aes-gcm",

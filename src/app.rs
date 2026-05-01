@@ -35,7 +35,7 @@ pub enum Action {
     ToggleTab(usize),
 }
 
-pub struct AndroidUnlockerApp {
+pub struct AndroKitApp {
     pub state: Arc<Mutex<AppState>>,
     pub config: FullConfig,
     pub rx: Receiver<ProcessOutput>,
@@ -46,7 +46,7 @@ pub struct AndroidUnlockerApp {
     pub dmesg_state: Arc<Mutex<DmesgState>>,
 }
 
-impl AndroidUnlockerApp {
+impl AndroKitApp {
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         let (tx, rx) = unbounded();
         let rt = tokio::runtime::Runtime::new().expect("Unable to create Runtime");

@@ -88,7 +88,7 @@ pub fn render(ui: &mut egui::Ui, _state: &AppState, _action: &mut Option<Action>
                 ui.label(RichText::new("About").strong());
             });
             ui.separator();
-            ui.label("Android Bootloader & Recovery Tool");
+            ui.label("AndroKit");
             ui.label("Version: 0.4.0");
             ui.label("Author: Eliott");
             ui.label("License: GPLv3");

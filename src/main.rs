@@ -14,12 +14,12 @@ mod safety;
 mod state;
 mod ui;
 
-use app::{Action, AndroidUnlockerApp};
+use app::{Action, AndroKitApp};
 use eframe::egui::{self, Color32, RichText};
 use executor::ProcessOutput;
 use rfd::FileDialog;
 
-impl eframe::App for AndroidUnlockerApp {
+impl eframe::App for AndroKitApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         ctx.set_visuals(egui::Visuals::light());
         self.check_device_state();
@@ -86,7 +86,7 @@ impl eframe::App for AndroidUnlockerApp {
                 ui.add_space(8.0);
                 ui.horizontal(|ui| {
                     ui.vertical(|ui| {
-                        ui.label(RichText::new("Android Bootloader & Recovery Tool").size(20.0).strong());
+                        ui.label(RichText::new("AndroKit").size(20.0).strong());
                         ui.label(RichText::new("Connected Device Details").color(Color32::GRAY));
                     });
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -256,8 +256,8 @@ fn main() -> eframe::Result<()> {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([1000.0, 750.0])
-            .with_title("Enhanced Android Bootloader & Recovery Tool (Rust)"),
+            .with_title("AndroKit"),
         ..Default::default()
     };
-    eframe::run_native("Android Unlocker Rust", options, Box::new(|cc| Box::new(AndroidUnlockerApp::new(cc))))
+    eframe::run_native("AndroKit", options, Box::new(|cc| Box::new(AndroKitApp::new(cc))))
 }

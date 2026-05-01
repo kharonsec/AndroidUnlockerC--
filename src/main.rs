@@ -6,6 +6,7 @@ mod app;
 mod config;
 mod executor;
 mod flash;
+mod legal;
 mod network;
 mod platform;
 mod protocols;

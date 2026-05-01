@@ -1,4 +1,5 @@
 use super::{Action, AppState};
+use egui::{Color32, RichText};
 
 pub fn render(
     ui: &mut egui::Ui,
@@ -6,8 +7,6 @@ pub fn render(
     action: &mut Option<Action>,
     disable_actions: bool,
 ) {
-    use egui::{Color32, RichText};
-
     ui.add_space(10.0);
     ui.group(|ui| {
         ui.vertical_centered(|ui| {

@@ -1,35 +1,3 @@
-# --- Build Artifacts ---
-*.o          # Object files
-*.exe        # Windows executables
-androidtool  # Linux/macOS executable name (adjust if you change the name)
-Makefile
-makefile     # Handle case variations
-
-# --- Qt Generated Files ---
-moc_*.cpp    # Meta-Object Compiler generated source files
-moc_*.o      # Compiled moc files
-# ui_*.h     # Uncomment if you start using Qt Designer .ui files
-
-# --- qmake User/Cache Files ---
-*.pro.user
-*.pro.filters
-.qmake.stash
-# qmake often puts build outputs in subdirectories like debug/ release/
-# debug/
-# release/
-
-# --- Editor/IDE Specific Files ---
-.vscode/     # VS Code
-.idea/       # IntelliJ / CLion
-
-# --- Application Specific Files ---
-*.log        # Log files created by the application
-
-# --- Platform Specific Files (less common in simple projects) ---
-*.dll        # Dynamic libraries (if your project built any)
-*.so         # Shared libraries (if your project built any)
-*.dylib      # macOS libraries
-
-# Added by cargo
-
 /target
+*.o
+Makefile
